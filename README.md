@@ -500,9 +500,8 @@ We appreciate your understanding and look forward to collaborative efforts in sh
 
 
 ## Contributing to the SPHINX Blockchain Project
-> 
-> We are excited to welcome contributions from the developer community to help enhance the SPHINX blockchain project. If you're interested in contributing, please follow the guidelines outlined below.
->
+We are excited to welcome contributions from the developer community to help enhance the SPHINX blockchain project. If you're interested in contributing, please follow the guidelines outlined below.
+
 ### Getting Started
 > 
 > ```bash
