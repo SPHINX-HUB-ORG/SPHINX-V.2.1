@@ -499,22 +499,13 @@ As the project progresses, further updates and enhancements will be made to ensu
 We appreciate your understanding and look forward to collaborative efforts in shaping the future of the SPHINX blockchain project.
 
 
-## Getting Started
-To get started with the SPHINX blockchain project, follow the instructions below:
-
-1. Clone the repository.
-2. Install the necessary dependencies.
-3. Explore the codebase to understand the project structure and components.
-4. Run the project or make modifications as needed.
-
-
-> # Contributing to the SPHINX Blockchain Project
+## Contributing to the SPHINX Blockchain Project
 > 
 > We are excited to welcome contributions from the developer community to help enhance the SPHINX blockchain project. If you're interested in contributing, please follow the guidelines outlined below.
+>
+### Getting Started
 > 
-> ## Getting Started
-> 
-> ```
+> ```bash
 > # Fork the repository on GitHub.
 > # Create a new branch for your feature or bug fix:
 > git checkout -b feature/your-feature-name
@@ -524,9 +515,9 @@ To get started with the SPHINX blockchain project, follow the instructions below
 > git checkout -b bugfix/your-bug-fix
 > ```
 > 
-> ## Making Changes
+### Making Changes
 > 
-> ```
+> ```bash
 > # Make your modifications while ensuring clean and readable code adhering to coding standards.
 > # If applicable, write tests to cover your changes.
 > 
@@ -534,22 +525,40 @@ To get started with the SPHINX blockchain project, follow the instructions below
 > git commit -m "Description of your changes"
 > ```
 > 
-> ## Pushing Changes
+### Pushing Changes
 > 
-> ```
+> ```bash
 > # Push the branch to your forked repository:
 > git push origin your-branch-name
 > ```
-> 
-> ## Opening a Pull Request
+>
+### Opening a Pull Request
 > 
 > - Open a pull request against the main repository, describing your changes and the problem they solve.
 > 
-> ## Code Language
+### Code Language
 > 
 > The SPHINX blockchain project primarily uses C++ for its development. Please ensure your contributions are in C++ and adhere to coding conventions.
+>
+### Installing C++ Development Tools
 > 
-> ## How to Contribute
+> To contribute to the SPHINX blockchain project, you'll need C++ development tools installed on your computer, including a C++ compiler, CMake, and a code editor.
+> 
+### Installing CMake
+> 
+> CMake is a cross-platform build system that the project uses for compilation. You can download and install CMake from the official website: [CMake Downloads](https://cmake.org/download/)
+> 
+### Setting up Visual Studio Code
+> 
+> Visual Studio Code is a popular code editor that supports C++ development.
+> 
+> 1. Install Visual Studio Code: [VS Code](https://code.visualstudio.com/)
+> 2. Install the C/C++ extension by Microsoft for VS Code: Search for "C/C++" in the Extensions marketplace within VS Code.
+> 3. Configure the extension to use your installed C++ compiler and tools.
+> 
+> With these tools set up, you'll be ready to start contributing to the SPHINX blockchain project.
+> 
+### How to Contribute
 > 
 > 1. Fork the repository on GitHub.
 > 2. Clone your forked repository to your local machine:
@@ -575,11 +584,12 @@ To get started with the SPHINX blockchain project, follow the instructions below
 >    - Click on the "New Pull Request" button.
 >    - Select the appropriate branch and provide a clear description of your changes.
 > 
-> ## Adding Your Information
+### Adding Your Information
 > 
 > After your pull request is accepted and merged, we'll be happy to include you as a contributor. To do this, please insert your information (name, email) in the "Authors" section of the project.
 > 
 > Thank you for considering contributing to the SPHINX blockchain project. Your efforts help us build a better blockchain ecosystem!
+
 
 
 ## Contact
