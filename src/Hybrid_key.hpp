@@ -15,21 +15,6 @@
 #include <vector>
 #include <cstdint>
 
-#include "lib/Openssl/evp.h"
-#include "lib/Openssl/hkdf.h" 
-#include "lib/Openssl/hmac.h"
-#include "lib/Openssl/curve448/point_448.h"
-#include "lib/Openssl/sha.h"
-#include "lib/Swifftx/SHA3.h"
-#include "lib/Kyber/include/kyber1024_kem.hpp"
-#include "lib/Kyber/include/kyber1024_pke.hpp"
-#include "lib/Kyber/include/encapsulation.hpp"
-#include "lib/Kyber/include/decapsulation.hpp"
-#include "lib/Kyber/include/encryption.hpp"
-#include "lib/Kyber/include/compression.hpp"
-#include "lib/Kyber/include/pke_keygen.hpp"
-
-
 namespace SPHINXHybridKey {
 
     // Constants

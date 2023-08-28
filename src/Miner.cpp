@@ -59,6 +59,7 @@
 #include "Asset.hpp"
 #include "Node.hpp"
 
+
 namespace SPHINXMiner {
 
     Miner::Miner() : difficulty_(4), rewardHalvingInterval_(210000), reward_(50) {

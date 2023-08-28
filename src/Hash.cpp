@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "lib/Swifftx/SHA3.h"
+#include "Crypto/Swifftx/SHA3.h"
 #include "Hash.hpp"
 
 
