@@ -8,6 +8,7 @@
 
 #include "MerkleBlock.hpp"
 #include "Hash.hpp"
+#include "Block.hpp"
 #include "Consensus/Consensus.hpp"
 
 namespace SPHINXMerkleblock {

@@ -3,62 +3,36 @@
 // This software is distributed under the MIT License.
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// This code defines the Block class, which represents a block in a blockchain. The Block class contains various member variables 
-// and member functions to handle block data, mining, signature verification, and serialization to JSON format.
+// Private Member Variables: The private member variables seem well-defined and cover important block attributes like previous hash, merkle
+// root, signature, timestamp, nonce, difficulty, transactions, etc.
 
-// Namespace Definitions:
-    // The code introduces three namespaces: SPHINXHash, SPHINXMerkleBlock, and SPHINXBlock.
-    // Namespaces are used to group related functionality, and they help prevent naming conflicts.
-    // The SPHINXHash namespace contains the SPHINX_256 function, which is used to calculate the hash of data using the SPHINX_256 
-    // algorithm.
-    // The SPHINXMerkleBlock namespace provides the constructMerkleTree function, which is used to construct the Merkle tree for the block.
+    // Constructor: The constructor appears to be designed to initialize a block with the required attributes. The use of the member
+    // initialization list is good practice for initializing variables. However, ensure that the types of the input arguments 
+    // (timestamp and nonce) are correctly chosen based on their usage.
 
-// Private Member Variables:
-    // The Block class has several private member variables that store information about a block in the blockchain.
-    // previousHash_: The hash of the previous block in the blockchain.
-    // merkleRoot_: The Merkle root hash of the transactions in the block.
-    // signature_: The signature of the block.
-    // blockHeight_: The position of the block within the blockchain.
-    // timestamp_: The time when the block was created.
-    // nonce_: A random value used in the mining process to find a valid block hash.
-    // difficulty_: A measure of how hard it is to find a valid block hash (mining difficulty).
-    // transactions_: The list of transactions included in the block.
-    // blockchain_: A pointer to the blockchain (assuming SPHINXChain::Chain is a class).
-    // checkpointBlocks_: A reference to the list of checkpoint blocks.
-    // storedMerkleRoot_: A private member variable to store the Merkle root for signature verification purposes.
-    // storedSignature_: A private member variable to store the signature for signature verification purposes.
+    // Transaction Management: The ability to add transactions to the block and manage them using vectors is suitable for a blockchain system.
 
-// Constructors:
-    // The class has two constructors to create Block objects.
-    // The first constructor takes the hash of the previous block and initializes other member variables with default values. 
-    // It sets the timestamp to the current time.
-    // The second constructor additionally takes a vector of checkpoint blocks as input.
+    // Hash and Merkle Root Calculation: The methods for calculating the block hash and Merkle root seem correct, assuming that the necessary
+    // functions (SPHINXHash::SPHINX_256 and SPHINXMerkleBlock::constructMerkleTree) are correctly implemented.
 
-// Member Functions:
-    // addTransaction: Adds a transaction to the block by appending it to the transactions_ vector.
-    // calculateBlockHash: Calculates the block hash by concatenating relevant data and computing the SPHINX_256 hash of the block data.
-    // calculateMerkleRoot: Calculates the Merkle root of the transactions in the block using the constructMerkleTree function from the 
-    // SPHINXMerkleBlock namespace.
-    // signMerkleRoot: Signs the Merkle root with SPHINCS+ private key and stores the signature and Merkle root for later verification.
-    // verifySignature: Verifies the block's signature using the SPHINCS+ verification function available in the library.
-    // verifyMerkleRoot: Verifies the block's Merkle root using the verifyMerkleRoot function from the SPHINXMerkleBlock namespace.
-    // verifyBlock: Verifies the entire block (signature and Merkle root) with the given public key.
-    // mineBlock: Attempts to mine the block by finding a valid hash that meets the mining difficulty level.
-    // toJson: Converts the block object to a JSON format.
-    // fromJson: Parses a JSON object and assigns values to the corresponding member variables.
-    // save: Saves the block data to a file in JSON format.
-    // load: Loads a block from a file and initializes a new Block object from the JSON data.
-    // saveToDatabase: Saves the block data to a distributed database as a JSON string.
-    // loadFromDatabase: Loads a block from the distributed database and initializes a new Block object from the JSON data.
-    // getStoredMerkleRoot and getStoredSignature: Getter functions to retrieve the stored Merkle root and signature.
+    // Signature and Verification: The functions related to signing the Merkle root and verifying the block's signature seem appropriate.
+    // Make sure that the underlying cryptographic library (SPHINXSign) is reliable.
 
-// The Block class provides functionalities to handle block data, calculate block hashes, construct Merkle trees, mine blocks, sign and 
-// verify block signatures, serialize block data to JSON format, and store and retrieve blocks from a distributed database.
+    // Serialization and Deserialization: The toJson and fromJson functions are correctly designed to serialize and deserialize the block data
+    // in JSON format. Again, this depends on the correctness of the nlohmann::json library and the correct implementation of these functions.
     
-// The code represents a simplified implementation of a blockchain system with functionality related to block creation, verification, 
+    // Printing Block Data: The toString and print functions are useful for displaying block data in a human-readable format.
+
+    // File I/O: The save and load functions for saving/loading blocks to/from files are reasonable and follow standard practices.
+
+    // Database Interaction: The saveToDatabase and loadFromDatabase functions for interacting with a distributed database are suitable for
+    // storing and retrieving block data. The implementation assumes the availability of the SPHINXDb::DistributedDb class and its methods.
+
+    // Getter Functions: The getter functions for retrieving stored Merkle root and signature seem well-defined.
+
+// The code represents a simplified implementation of a block management system with functionality related to block creation, verification, 
 // mining, Merkle tree construction, and database interaction.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 
 #include <stdexcept>
@@ -72,36 +46,31 @@
 
 #include "Block.hpp"
 #include "Hash.hpp"
-#include "Sign.hpp"
 #include "SphinxJS/jsonrpcpp/include/json.hpp"
-#include "MerkleBlock.hpp"
+#include "Merkleblock.hpp"
 #include "Transaction.hpp"
 #include "Chain.hpp"
-#include "PoW.hpp"
-#include "db.hpp"
-#include "Verify.hpp"
-#include "PoW.hpp"
-#include "Key.hpp"
+#include "Db.hpp"
 #include "Params.hpp"
-#include "Utxo.hpp"
 #include "BlockManager.hpp"
 
 
-namespace SPHINXHash {
-    std::string SPHINX_256(const std::string& data); // Function declaration for SPHINX_256
-}
-
-namespace SPHINXMerkleBlock {
-    class MerkleBlock; // Forward declaration of the MerkleBlock class
-
-    // Correct the constructMerkleTree function declaration
-    std::string constructMerkleTree(const std::vector<SPHINXTrx::Transaction>& signedTransactions);
-}
-
 namespace SPHINXBlock {
-    class Block {
+    class Block {    
+    struct BlockHeader {
+        uint32_t version;
+        std::string previousHash;
+        std::string merkleRoot;
+        std::string signature;
+        uint32_t blockHeight;
+        std::time_t timestamp;
+        uint32_t nonce;
+        uint32_t difficulty;
+    };
+
     private:
         // Private member variables
+        int index;
         std::string previousHash_;               // The hash of the previous block in the blockchain
         std::string merkleRoot_;                 // The Merkle root hash of the transactions in the block
         std::string signature_;                  // The signature of the block
@@ -122,15 +91,33 @@ namespace SPHINXBlock {
         static const uint32_t MAX_BLOCK_SIZE = 1000;       // Maximum allowed block size in number of transactions
         static const uint32_t MAX_TIMESTAMP_OFFSET = 600;  // Maximum allowed timestamp difference from current time
 
-        // Constructors
-        Block(const std::string& previousHash)
-            : previousHash_(previousHash), blockHeight_(0), nonce_(0), difficulty_(0) {
-            timestamp_ = std::time(nullptr); // Set the timestamp to the current time
+        // Add index function to the public section of Block class
+        int getIndex() const {
+            return index;
         }
 
-        Block(const std::string& previousHash, uint32_t version)
-            : previousHash_(previousHash), blockHeight_(0), nonce_(0), difficulty_(0), version_(version) {
+        // Add a method to get the block header
+        BlockHeader getBlockHeader() const {
+            return SPHINXMerkleblock::getBlockHeader(previousHash_, std::to_string(timestamp_), std::to_string(nonce_), transactions_, version_);
+        }
+        
+        // Constructor with version parameter and optional previousHash and index
+        Block(const std::string& prevBlockHash, const std::string& timestamp, const std::string& nonce, const std::vector<Transaction>& transactions, const std::string& version, const std::string& previousHash = "", int index = 0)
+            : index(index), previousHash_(previousHash), blockHeight_(0), nonce_(0), difficulty_(0), version_(version) {
             timestamp_ = std::time(nullptr); // Set the timestamp to the current time
+
+            if (!previousHash.empty()) {
+                this->previousHash_ = prevBlockHash;
+            }
+
+            this->timestamp_ = timestamp;
+            this->nonce_ = nonce;
+            this->transactions_ = transactions;
+            this->version_ = version; // Set the version for this block
+
+            // Merkle tree construction function is already implemented in "MerkleBlock.cpp"
+            std::string merkleRoot = SPHINXMerkleBlock::constructMerkleTree(transactions);
+            this->setMerkleRoot(merkleRoot); // Set the Merkle root for this block
         }
 
         // Getter function to retrieve the block version
@@ -188,42 +175,6 @@ namespace SPHINXBlock {
         bool verifyBlock(const SPHINXPubKey& publicKey) const {
             // Call the verifySignature and verifyMerkleRoot functions
             return verifySignature(publicKey) && verifyMerkleRoot(publicKey);
-        }
-
-        // Function to mine the block with the given difficulty
-        bool mineBlock(uint32_t difficulty) {
-            std::string target(difficulty, '0');  // Create a target string with the specified difficulty level
-
-            while (true) {
-                nonce_++;  // Increment the nonce
-
-                // Calculate the block hash
-                std::string blockHash = calculateBlockHash();
-
-                // Check if the block hash meets the target difficulty
-                if (blockHash.substr(0, difficulty) == target) {
-                    // Block successfully mined
-
-                    //*
-                    // UTXO function used in the mineBlock function in this version of block.cpp. 
-                    // The mineBlock function is responsible for mining a block by finding a valid hash 
-                    // that meets the required difficulty level. When a block is successfully mined, 
-                    // the mineBlock function updates the UTXO set based on the transactions included 
-                    // in the block. The UTXO set represents the unspent transaction outputs, and 
-                    // updating it is an essential part of the blockchain's functioning to ensure the 
-                    // correctness of transactions.
-                    //*
-
-                    // Update the UTXO set based on the transactions in the block
-                    std::map<std::string, SPHINXUtxo::UTXO> utxoSet; // Assuming you have access to the UTXO set
-                    SPHINXUtxo::updateUTXOSet(*this, utxoSet);
-
-                    return true;
-                }
-            }
-
-            // Block mining failed
-            return false;
         }
 
         // Setters and getters for the remaining member variables
@@ -299,59 +250,53 @@ namespace SPHINXBlock {
         std::string getVersion() const {
             return version_;
         }
-    
-        // Constructor with version parameter
-        Block(const std::string& prevBlockHash, const std::string& timestamp, const std::string& nonce, const std::vector<Transaction>& transactions, const std::string& version) {
-            this->previousHash_ = prevBlockHash;
-            this->timestamp_ = timestamp;
-            this->nonce_ = nonce;
-            this->transactions_ = transactions;
-            this->version_ = version; // Set the version for this block
-    
-            // Merkle tree construction function is already implemented in "MerkleBlock.cpp"
-            std::string merkleRoot = SPHINXMerkleBlock::constructMerkleTree(transactions);
-            this->setMerkleRoot(merkleRoot); // Set the Merkle root for this block
+
+        // ! Block headers
+        // Function to serialize BlockHeader to JSON format
+        static nlohmann::json toJson(const BlockHeader& header) {
+            nlohmann::json headerJson;
+
+            headerJson["version"] = header.version;
+            headerJson["previousHash"] = header.previousHash;
+            headerJson["merkleRoot"] = header.merkleRoot;
+            headerJson["signature"] = header.signature;
+            headerJson["blockHeight"] = header.blockHeight;
+            headerJson["timestamp"] = header.timestamp;
+            headerJson["nonce"] = header.nonce;
+            headerJson["difficulty"] = header.difficulty;
+
+            return headerJson;
         }
 
-        // Block headers
-        nlohmann::json toJson() const {
-            // Convert the block object to JSON format
-            nlohmann::json blockJson;
+        // Function to deserialize JSON to BlockHeader
+        static BlockHeader fromJson(const nlohmann::json& headerJson) {
+            BlockHeader header;
 
-            blockJson["version"] = version_;               // Store the version in the JSON object
-            blockJson["previousHash"] = previousHash_;     // Store the previous hash in the JSON object
-            blockJson["merkleRoot"] = merkleRoot_;         // Store the Merkle root in the JSON object
-            blockJson["signature"] = signature_;           // Store the signature in the JSON object
-            blockJson["blockHeight"] = blockHeight_;       // Store the block height in the JSON object
-            blockJson["timestamp"] = timestamp_;           // Store the timestamp in the JSON object
-            blockJson["nonce"] = nonce_;                   // Store the nonce in the JSON object
-            blockJson["difficulty"] = difficulty_;         // Store the difficulty in the JSON object
+            header.version = headerJson["version"].get<uint32_t>();
+            header.previousHash = headerJson["previousHash"].get<std::string>();
+            header.merkleRoot = headerJson["merkleRoot"].get<std::string>();
+            header.signature = headerJson["signature"].get<std::string>();
+            header.blockHeight = headerJson["blockHeight"].get<uint32_t>();
+            header.timestamp = headerJson["timestamp"].get<std::time_t>();
+            header.nonce = headerJson["nonce"].get<uint32_t>();
+            header.difficulty = headerJson["difficulty"].get<uint32_t>();
 
-            nlohmann::json transactionsJson = nlohmann::json::array();
-            for (const std::string& transaction : transactions_) {
-                transactionsJson.push_back(transaction);   // Store each transaction in the JSON array
-            }
-            blockJson["transactions"] = transactionsJson;  // Store the transactions array in the JSON object
-
-            return blockJson;                              // Return the JSON object
+            return header;
         }
 
-        void fromJson(const nlohmann::json& blockJson) {
-            // Parse the JSON object and assign values to the corresponding member variables
-            version_ = blockJson["version"].get<uint32_t>();                  // Retrieve the version from the JSON object
-            previousHash_ = blockJson["previousHash"].get<std::string>();     // Retrieve the previous hash from the JSON object
-            merkleRoot_ = blockJson["merkleRoot"].get<std::string>();         // Retrieve the Merkle root from the JSON object
-            signature_ = blockJson["signature"].get<std::string>();           // Retrieve the signature from the JSON object
-            blockHeight_ = blockJson["blockHeight"].get<uint32_t>();          // Retrieve the block height from the JSON object
-            timestamp_ = blockJson["timestamp"].get<std::time_t>();           // Retrieve the timestamp from the JSON object
-            nonce_ = blockJson["nonce"].get<uint32_t>();                      // Retrieve the nonce from the JSON object
-            difficulty_ = blockJson["difficulty"].get<uint32_t>();            // Retrieve the difficulty from the JSON object
-
-            transactions_.clear();
-            const json& transactionsJson = blockJson["transactions"];
-            for (const auto& transactionJson : transactionsJson) {
-                transactions_.push_back(transactionJson.get<std::string>());  // Retrieve each transaction from the JSON array
-            }
+        // Function to print BlockHeader as a formatted string
+        static std::string toString(const BlockHeader& header) {
+            std::ostringstream oss;
+            oss << "Block Header:\n";
+            oss << "  Version: " << header.version << "\n";
+            oss << "  Previous Hash: " << header.previousHash << "\n";
+            oss << "  Merkle Root: " << header.merkleRoot << "\n";
+            oss << "  Signature: " << header.signature << "\n";
+            oss << "  Block Height: " << header.blockHeight << "\n";
+            oss << "  Timestamp: " << header.timestamp << "\n";
+            oss << "  Nonce: " << header.nonce << "\n";
+            oss << "  Difficulty: " << header.difficulty << "\n";
+            return oss.str();
         }
 
         bool save(const std::string& filename) const {
@@ -420,51 +365,4 @@ namespace SPHINXBlock {
             return storedSignature_;
         }
     };
-} // namespace SPHINXBlock
-
-
-//Usage
-int main() {
-    // Create a new block with a previous hash
-    std::string previousHash = "00000000000000000000000000000000"; // A placeholder for the previous block's hash
-    SPHINXBlock::Block block(previousHash);
-
-    // Add transactions to the block
-    block.addTransaction("Transaction 1");
-    block.addTransaction("Transaction 2");
-    block.addTransaction("Transaction 3");
-
-    // Calculate the Merkle root
-    std::string merkleRoot = block.calculateMerkleRoot();
-
-    // Sign the Merkle root with the private key (assuming you have a private key)
-    SPHINXPrivKey privateKey = "your_private_key_here"; // Replace this with your actual private key
-    block.signMerkleRoot(privateKey, merkleRoot);
-
-    // Mine the block with a specified difficulty (e.g., 3 leading zeros)
-    uint32_t miningDifficulty = 3;
-    bool mined = block.mineBlock(miningDifficulty);
-
-    if (mined) {
-        // Print the block's information
-        std::cout << "Block successfully mined:" << std::endl;
-        std::cout << "Block Height: " << block.getBlockHeight() << std::endl;
-        std::cout << "Block Hash: " << block.calculateBlockHash() << std::endl;
-        std::cout << "Merkle Root: " << block.getMerkleRoot() << std::endl;
-        std::cout << "Signature: " << block.getSignature() << std::endl;
-
-        // Verify the block's signature and Merkle root
-        bool isSignatureValid = block.verifySignature("your_public_key_here"); // Replace this with your actual public key
-        bool isMerkleRootValid = block.verifyMerkleRoot("your_public_key_here");
-
-        if (isSignatureValid && isMerkleRootValid) {
-            std::cout << "Block signature and Merkle root are valid." << std::endl;
-        } else {
-            std::cout << "Block signature or Merkle root verification failed." << std::endl;
-        }
-    } else {
-        std::cout << "Block mining failed." << std::endl;
-    }
-
-    return 0;
 } // namespace SPHINXBlock
