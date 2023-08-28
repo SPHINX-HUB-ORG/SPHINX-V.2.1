@@ -23,30 +23,32 @@
 #include "MerkleBlock.hpp"
 #include "Chain.hpp"
 
-using json = nlohmann::json;
 
-// Add the appropriate namespace for the MerkleBlock
-using namespace SPHINXMerkleBlock;
-
-// Forward declarations
-namespace SPHINXTrx {
-    class Transaction; // Forward declaration of the Transaction class
-}
-
-// Forward declarations
+// Forward declaration of other classes used in this header
 namespace SPHINXChain {
-    class Chain; // Forward declaration of the Chain class
+    class Chain;  // Assuming you have a Chain class
 }
 
-// Forward declarations
 namespace SPHINXDb {
-    class DistributedDb; // Forward declaration of the DistributedDb class
+    class DistributedDb;  // Assuming you have a DistributedDb class
 }
 
 namespace SPHINXBlock {
     class Block {
+    public:
+        struct BlockHeader {
+            uint32_t version;
+            std::string previousHash;
+            std::string merkleRoot;
+            std::string signature;
+            uint32_t blockHeight;
+            std::time_t timestamp;
+            uint32_t nonce;
+            uint32_t difficulty;
+        };
+
     private:
-        // Private member variables
+        int index;
         std::string previousHash_;
         std::string merkleRoot_;
         std::string signature_;
@@ -54,55 +56,38 @@ namespace SPHINXBlock {
         std::time_t timestamp_;
         uint32_t nonce_;
         uint32_t difficulty_;
-        uint32_t version_; // Add this private member variable to store the version of the block
+        uint32_t version_;
         std::vector<std::string> transactions_;
         SPHINXChain::Chain* blockchain_;
         const std::vector<std::string>& checkpointBlocks_;
-        // Add a MerkleBlock member
-        SPHINXMerkleblock::CMerkleBlock merkleBlock_;
+        std::string storedMerkleRoot_;
+        std::string storedSignature_;
 
     public:
-        static const uint32_t MAX_BLOCK_SIZE;
-        static const uint32_t MAX_TIMESTAMP_OFFSET;
+        static const uint32_t MAX_BLOCK_SIZE = 1000;
+        static const uint32_t MAX_TIMESTAMP_OFFSET = 600;
 
-        // Constructor without checkpointBlocks parameter
-        Block(const std::string& previousHash, uint32_t version); // Add the version parameter to the constructor
+        int getIndex() const;
+        BlockHeader getBlockHeader() const;
 
-        // Constructor with the addition of checkpointBlocks parameter
-        Block(const std::string& previousHash, uint32_t version, const std::vector<std::string>& checkpointBlocks); // Add the version parameter to the constructor
+        Block(const std::string& prevBlockHash, const std::string& timestamp, const std::string& nonce, const std::vector<Transaction>& transactions, const std::string& version, const std::string& previousHash = "", int index = 0);
 
-        // Function to calculate the hash of the block
-        std::string calculateBlockHash() const;
-
-        // Add a transaction to the list of transactions in the block
+        uint32_t getVersion() const;
         void addTransaction(const std::string& transaction);
-
-        // Calculate and return the Merkle root of the transactions
+        std::string calculateBlockHash() const;
         std::string calculateMerkleRoot() const;
+        void signMerkleRoot(const SPHINXPrivKey& privateKey, const std::string& merkleRoot);
+        bool verifySignature(const SPHINXPubKey& publicKey) const;
+        bool verifyMerkleRoot(const SPHINXPubKey& publicKey) const;
+        bool verifyBlock(const SPHINXPubKey& publicKey) const;
 
-        // Function to sign the Merkle root with SPHINCS+ private key
-        std::string signMerkleRoot(const SPHINXPrivKey& privateKey, const std::string& merkleRoot);
-
-        // Function to store the Merkle root and signature in the header of the block
-        void storeMerkleRootAndSignature(const std::string& merkleRoot, const std::string& signature);
-
-        // Get the hash of the block by calling the calculateBlockHash() function
-        std::string getBlockHash() const;
-
-        // Verify the block's signature and Merkle root
-        bool verifyBlock(const SPHINXMerkleBlock::SPHINXPubKey& publicKey) const;
-
-        // Function to store the block in the chain
-        void storeInChain(SPHINXChain::Chain& chain) const;
-
-        // Setters and getters for the remaining member variables
         void setMerkleRoot(const std::string& merkleRoot);
-        void setVersion(const std::string& version);
         void setSignature(const std::string& signature);
         void setBlockHeight(uint32_t blockHeight);
         void setNonce(uint32_t nonce);
         void setDifficulty(uint32_t difficulty);
         void setTransactions(const std::vector<std::string>& transactions);
+
         std::string getPreviousHash() const;
         std::string getMerkleRoot() const;
         std::string getSignature() const;
@@ -111,20 +96,19 @@ namespace SPHINXBlock {
         uint32_t getNonce() const;
         uint32_t getDifficulty() const;
         std::vector<std::string> getTransactions() const;
+        std::string getVersion() const;
 
-        // Block headers
-        nlohmann::json toJson() const;
-        void fromJson(const nlohmann::json& blockJson);
+        static nlohmann::json toJson(const BlockHeader& header);
+        static BlockHeader fromJson(const nlohmann::json& headerJson);
+        static std::string toString(const BlockHeader& header);
+
         bool save(const std::string& filename) const;
         static Block load(const std::string& filename);
         bool saveToDatabase(SPHINXDb::DistributedDb& distributedDb) const;
         static Block loadFromDatabase(const std::string& blockId, SPHINXDb::DistributedDb& distributedDb);
 
-        // Constructor with MerkleBlock parameter
-        Block(const std::string& previousHash, uint32_t version, const SPHINXMerkleblock::CMerkleBlock& merkleBlock);
-
-        // Function to access the MerkleBlock
-        const SPHINXMerkleblock::CMerkleBlock& getMerkleBlock() const;
+        std::string getStoredMerkleRoot() const;
+        std::string getStoredSignature() const;
     };
 } // namespace SPHINXBlock
 
