@@ -97,8 +97,6 @@
 #include "ChainManager.hpp"
 
 
-using json = nlohmann::json;
-
 // Constant for block not found
 constexpr uint32_t BLOCK_NOT_FOUND = std::numeric_limits<uint32_t>::max();
 
