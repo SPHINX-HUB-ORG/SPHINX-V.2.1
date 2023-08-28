@@ -313,111 +313,92 @@ namespace SPHINXDb {
         }
 
         bool saveData(const std::string& filename) {
-            std::ofstream outputFile(filename);
+        nlohmann::json jsonData;
 
-            if (!outputFile.is_open()) {
-                std::cout << "Failed to open the file for saving data." << std::endl;
-                return false; // Failed to open the file
-            }
-
-            // Save the state of the distributed database to the file
-
-            // Save network nodes
-            for (const Node& node : networkNodes) {
-                outputFile << node.nodeId << "\n";
-                // Save other relevant data for each node
-            }
-
-            // Save transaction index
-            for (const auto& entry : transactionIndex) {
-                outputFile << entry.first << ":" << entry.second << "\n";
-            }
-
-            // Save block index
-            for (const auto& entry : blockIndex) {
-                outputFile << entry.first << ":" << entry.second.toJson() << "\n";
-            }
-
-            // Save account transactions
-            for (const auto& entry : accountTransactions) {
-                outputFile << entry.first << ":";
-                for (const std::string& transaction : entry.second) {
-                    outputFile << transaction << ",";
-                }
-                outputFile << "\n";
-            }
-
-            outputFile.close();
-            std::cout << "Data saved successfully." << std::endl;
-            return true; // Successfully saved the data
+        // Save network nodes
+        for (const Node& node : networkNodes) {
+            // Add node data to jsonData
+            jsonData["networkNodes"].push_back({
+                {"nodeId", node.nodeId},
+                // Add other relevant data for each node
+            });
         }
 
-        bool loadData(const std::string& filename) {
-            std::ifstream inputFile(filename);
-
-            if (!inputFile.is_open()) {
-                std::cout << "Failed to open the file for loading data." << std::endl;
-                return false; // Failed to open the file
-            }
-
-            // Clear existing data structures before loading new data
-            networkNodes.clear();
-            transactionIndex.clear();
-            blockIndex.clear();
-            accountTransactions.clear();
-
-            // Load the state of the distributed database from the file
-
-            std::string line;
-
-            // Load network nodes
-            while (std::getline(inputFile, line) && !line.empty()) {
-                Node newNode;
-                newNode.nodeId = line;
-                // Load other relevant data for each node
-                networkNodes.push_back(newNode);
-            }
-
-            // Load transaction index
-            while (std::getline(inputFile, line) && !line.empty()) {
-                size_t separatorPos = line.find(':');
-                if (separatorPos != std::string::npos) {
-                    std::string transactionId = line.substr(0, separatorPos);
-                    std::string transactionData = line.substr(separatorPos + 1);
-                    transactionIndex[transactionId] = transactionData;
-                }
-            }
-
-            // Load block index
-            while (std::getline(inputFile, line) && !line.empty()) {
-                size_t separatorPos = line.find(':');
-                if (separatorPos != std::string::npos) {
-                    std::string blockId = line.substr(0, separatorPos);
-                    std::string blockData = line.substr(separatorPos + 1);
-                    // Create a Block object from the block data
-                    SPHINXBlock::Block block(blockData);
-                    blockIndex[blockId] = block;
-                }
-            }
-
-            // Load account transactions
-            while (std::getline(inputFile, line) && !line.empty()) {
-                size_t separatorPos = line.find(':');
-                if (separatorPos != std::string::npos) {
-                    std::string account = line.substr(0, separatorPos);
-                    std::string transactions = line.substr(separatorPos + 1);
-                    std::istringstream ss(transactions);
-                    std::string transactionId;
-                    while (std::getline(ss, transactionId, ',')) {
-                        accountTransactions[account].insert(transactionId);
-                    }
-                }
-            }
-
-            inputFile.close();
-            std::cout << "Data loaded successfully." << std::endl;
-            return true; // Successfully loaded the data
+        // Save transaction index
+        for (const auto& entry : transactionIndex) {
+            jsonData["transactionIndex"][entry.first] = entry.second;
         }
+
+        // Save block index
+        for (const auto& entry : blockIndex) {
+            jsonData["blockIndex"][entry.first] = entry.second.toJson();
+        }
+
+        // Save account transactions
+        for (const auto& entry : accountTransactions) {
+            jsonData["accountTransactions"][entry.first] = entry.second;
+        }
+
+        // Save jsonData to the file
+        std::ofstream outputFile(filename);
+        if (!outputFile.is_open()) {
+            std::cout << "Failed to open the file for saving data." << std::endl;
+            return false; // Failed to open the file
+        }
+        outputFile << jsonData.dump(4); // Use 4-space indentation for readability
+        outputFile.close();
+        std::cout << "Data saved successfully." << std::endl;
+        return true; // Successfully saved the data
+    }
+
+    bool loadData(const std::string& filename) {
+        std::ifstream inputFile(filename);
+        if (!inputFile.is_open()) {
+            std::cout << "Failed to open the file for loading data." << std::endl;
+            return false; // Failed to open the file
+        }
+
+        // Parse JSON data from the file
+        nlohmann::json jsonData;
+        inputFile >> jsonData;
+        inputFile.close();
+
+        // Clear existing data structures before loading new data
+        networkNodes.clear();
+        transactionIndex.clear();
+        blockIndex.clear();
+        accountTransactions.clear();
+
+        // Load network nodes
+        for (const auto& nodeData : jsonData["networkNodes"]) {
+            Node newNode;
+            newNode.nodeId = nodeData["nodeId"];
+            // Load other relevant data for each node
+            networkNodes.push_back(newNode);
+        }
+
+        // Load transaction index
+        for (const auto& entry : jsonData["transactionIndex"].items()) {
+            transactionIndex[entry.key()] = entry.value();
+        }
+
+        // Load block index
+        for (const auto& entry : jsonData["blockIndex"].items()) {
+            // Create a Block object from the block JSON data
+            SPHINXBlock::Block block(entry.value().dump());
+            blockIndex[entry.key()] = block;
+        }
+
+        // Load account transactions
+        for (const auto& entry : jsonData["accountTransactions"].items()) {
+            for (const std::string& transaction : entry.value()) {
+                accountTransactions[entry.key()].insert(transaction);
+            }
+        }
+
+        std::cout << "Data loaded successfully." << std::endl;
+        return true; // Successfully loaded the data
+    }
 
     private:
         std::string extractSender(const std::string& transactionData) {
