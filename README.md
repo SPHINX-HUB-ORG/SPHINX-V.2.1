@@ -1,10 +1,11 @@
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/your-username/your-repo/blob/main/LICENSE)
+[![Open Source](https://img.shields.io/badge/Open-Source-green.svg)](https://opensource.org/)
+
 # SPHINX-HUB
 
 ![Sphinx Hub Logo](https://github.com/SPHINX-HUB-ORG/SPHINX-HUB/blob/main/asset/logo3-01.jpg)
 
 ## Table of Contents
-
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/your-username/your-repo/blob/main/LICENSE)
 
 - [Introduction](#introduction)
 - [Background](#background)
@@ -499,27 +500,97 @@ As the project progresses, further updates and enhancements will be made to ensu
 We appreciate your understanding and look forward to collaborative efforts in shaping the future of the SPHINX blockchain project.
 
 
-## Getting Started
-To get started with the SPHINX blockchain project, follow the instructions below:
+## Contributing to the SPHINX Blockchain Project
+We are excited to welcome contributions from the developer community to help enhance the SPHINX blockchain project. If you're interested in contributing, please follow the guidelines outlined below.
 
-1. Clone the repository.
-2. Install the necessary dependencies.
-3. Explore the codebase to understand the project structure and components.
-4. Run the project or make modifications as needed.
+### Getting Started
+> 
+> ```bash
+> # Fork the repository on GitHub.
+> # Create a new branch for your feature or bug fix:
+> git checkout -b feature/your-feature-name
+> 
+> # or
+> 
+> git checkout -b bugfix/your-bug-fix
+> ```
+> 
+### Making Changes
+> 
+> ```bash
+> # Make your modifications while ensuring clean and readable code adhering to coding standards.
+> # If applicable, write tests to cover your changes.
+> 
+> # Commit your changes:
+> git commit -m "Description of your changes"
+> ```
+> 
+### Pushing Changes
+> 
+> ```bash
+> # Push the branch to your forked repository:
+> git push origin your-branch-name
+> ```
+>
+### Opening a Pull Request
+> 
+> - Open a pull request against the main repository, describing your changes and the problem they solve.
+> 
+### Code Language
+> 
+> The SPHINX blockchain project primarily uses C++ for its development. Please ensure your contributions are in C++ and adhere to coding conventions.
+>
+### Installing C++ Development Tools
+> 
+> To contribute to the SPHINX blockchain project, you'll need C++ development tools installed on your computer, including a C++ compiler, CMake, and a code editor.
+> 
+### Installing CMake
+> 
+> CMake is a cross-platform build system that the project uses for compilation. You can download and install CMake from the official website: [CMake Downloads](https://cmake.org/download/)
+> 
+### Setting up Visual Studio Code
+> 
+> Visual Studio Code is a popular code editor that supports C++ development.
+> 
+> 1. Install Visual Studio Code: [VS Code](https://code.visualstudio.com/)
+> 2. Install the C/C++ extension by Microsoft for VS Code: Search for "C/C++" in the Extensions marketplace within VS Code.
+> 3. Configure the extension to use your installed C++ compiler and tools.
+> 
+> With these tools set up, you'll be ready to start contributing to the SPHINX blockchain project.
+> 
+### How to Contribute
+> 
+> 1. Fork the repository on GitHub.
+> 2. Clone your forked repository to your local machine:
+>    ```bash
+>    git clone https://github.com/your-username/sphinx.git
+>    ```
+> 3. Set the upstream remote to the original repository:
+>    ```bash
+>    git remote add upstream https://github.com/sphinx/sphinx.git
+>    ```
+> 4. Create a new branch for your work:
+>    ```bash
+>    git checkout -b feature/your-feature-name
+>    ```
+> 5. Make your changes, write code, and tests if applicable.
+> 6. Commit your changes and push them to your forked repository:
+>    ```bash
+>    git commit -m "Description of your changes"
+>    git push origin feature/your-feature-name
+>    ```
+> 7. Open a pull request:
+>    - Go to your forked repository on GitHub.
+>    - Click on the "New Pull Request" button.
+>    - Select the appropriate branch and provide a clear description of your changes.
+> 
+### Adding Your Information
+> 
+> After your pull request is accepted and merged, we'll be happy to include you as a contributor. To do this, please insert your information (name, email) in the "Authors" section of the project.
+> 
+> Thank you for considering contributing to the SPHINX blockchain project. Your efforts help us build a better blockchain ecosystem!
 
 
-## Contributing
-
-We welcome contributions from the developer community to enhance the SPHINX blockchain project. If you are interested in contributing, please follow the guidelines below:
-
-1. Fork the repository on GitHub.
-2. Create a new branch for your feature or bug fix: `git checkout -b feature/your-feature-name` or `git checkout -b bugfix/your-bug-fix`.
-3. Make your modifications and ensure the code remains clean and readable.
-4. Write tests to cover the changes you've made, if applicable.
-5. Commit your changes: `git commit -m "Description of your changes"`.
-6. Push the branch to your forked repository: `git push origin your-branch-name`.
-7. Open a pull request against the main repository, describing your changes and the problem it solves.
-8. Insert your information (i.e name, email) in the authors space.
 
 ## Contact
 If you have any questions, requests, suggestions, or feedback regarding the SPHINX blockchain project, feel free to reach out to us at [sphinxfounders@gmail.com](mailto:sphinxfounders@gmail.com).
