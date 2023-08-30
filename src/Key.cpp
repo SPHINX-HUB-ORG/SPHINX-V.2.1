@@ -137,41 +137,31 @@ std::string EncodeBase58(const std::vector<unsigned char>& data) {
     return encoded;
 }
 
-namespace SPHINXKey {
-
-    // Constants
+// Constants
     constexpr size_t CURVE448_PRIVATE_KEY_SIZE = 56;
     constexpr size_t CURVE448_PUBLIC_KEY_SIZE = 56;
     constexpr size_t KYBER1024_PUBLIC_KEY_LENGTH = 800;
-    
-    // Size of HYBRIDKEY
-    constexpr size_t HYBRID_KEYPAIR_LENGTH = SPHINXHybridKey::CURVE448_PUBLIC_KEY_SIZE + SPHINXHybridKey::KYBER1024_PUBLIC_KEY_LENGTH + 2 * SPHINXHybridKey::HMAC_MAX_MD_SIZE;
-    // HYBRID_KEYPAIR_LENGTH = 56 (Curve448 public key size) + 800 (Kyber1024 public key length) + 2 * 64 (HMAC_MAX_MD_SIZE) = 976;
 
-    // Define an alias for the merged public key as SPHINXPubKey
+    // Define an alias for the public key as SPHINXPubKey
     using SPHINXPubKey = std::vector<unsigned char>;
 
-    // Define an alias for the merged private key as SPHINXPrivKey
+    // Define an alias for the private key as SPHINXPrivKey
     using SPHINXPrivKey = std::vector<unsigned char>;
 
     // Function to calculate the SPHINX public key from the private key
-    SPHINXKey::SPHINXPubKey calculatePublicKey(const SPHINXKey::SPHINXPrivKey& privateKey) {
-        // The length of the Kyber1024 public key
-        constexpr size_t KYBER_PUBLIC_KEY_LENGTH = SPHINXKey::KYBER1024_PUBLIC_KEY_LENGTH;
-
-        // Calculate the SPHINX public key by extracting the Kyber1024 public key from the merged private key
-        SPHINXKey::SPHINXPubKey sphinxPubKey(privateKey.begin() + CURVE448_PRIVATE_KEY_SIZE, privateKey.end());
-
+    SPHINXPubKey calculatePublicKey(const SPHINXPrivKey& privateKey) {
+        // Calculate the SPHINX public key using the provided private key
+        SPHINXPubKey sphinxPubKey(privateKey.begin() + CURVE448_PRIVATE_KEY_SIZE, privateKey.end());
         return sphinxPubKey;
     }
 
     // Function to convert SPHINXKey to string
-    std::string sphinxKeyToString(const SPHINXKey::SPHINXKey& key) {
+    std::string sphinxKeyToString(const SPHINXKey& key) {
         return std::string(key.begin(), key.end());
     }
 
     // Function to generate the smart contract address based on the public key and contract name
-    std::string generateAddress(const SPHINXKey::SPHINXPubKey& publicKey, const std::string& contractName) {
+    std::string generateAddress(const SPHINXPubKey& publicKey, const std::string& contractName) {
         // Step 1: Convert the public key to a string
         std::string pubKeyString = sphinxKeyToString(publicKey);
 
@@ -200,82 +190,28 @@ namespace SPHINXKey {
         return address;
     }
 
-    // Function to merge the private keys of Curve448 and Kyber1024
-    SPHINXKey::SPHINXPrivKey mergePrivateKeys(const SPHINXKey::SPHINXPrivKey& curve448PrivateKey, const SPHINXKey::SPHINXPrivKey& kyberPrivateKey) {
-        SPHINXKey::SPHINXPrivKey mergedPrivateKey;
-        mergedPrivateKey.reserve(curve448PrivateKey.size() + kyberPrivateKey.size());
-        mergedPrivateKey.insert(mergedPrivateKey.end(), curve448PrivateKey.begin(), curve448PrivateKey.end());
-        mergedPrivateKey.insert(mergedPrivateKey.end(), kyberPrivateKey.begin(), kyberPrivateKey.end());
-        return SPHINXHash::SPHINX_256(mergedPrivateKey); // Hash the merged private key
-    }
-
-    // Function to merge the public keys of Curve448 and Kyber1024
-    SPHINXKey::SPHINXPubKey mergePublicKeys(const SPHINXKey::SPHINXPubKey& curve448PublicKey, const SPHINXKey::SPHINXPubKey& kyberPublicKey) {
-        SPHINXKey::SPHINXPubKey mergedPublicKey;
-        mergedPublicKey.reserve(curve448PublicKey.size() + kyberPublicKey.size());
-        mergedPublicKey.insert(mergedPublicKey.end(), curve448PublicKey.begin(), curve448PublicKey.end());
-        mergedPublicKey.insert(mergedPublicKey.end(), kyberPublicKey.begin(), kyberPublicKey.end());
-        return SPHINXHash::SPHINX_256(mergedPublicKey); // Hash the merged public key
-    }
-
-    // Function to generate the hybrid key pair from "hybrid_key.cpp"
-    SPHINXHybridKey::HybridKeypair generate_hybrid_keypair() {
-        // Function to merge the private keys of Curve448 and Kyber1024
-        auto mergePrivateKeys = [](const SPHINXKey::SPHINXPrivKey& curve448PrivateKey, const SPHINXKey::SPHINXPrivKey& kyberPrivateKey) {
-            SPHINXKey::SPHINXPrivKey mergedPrivateKey;
-            mergedPrivateKey.insert(mergedPrivateKey.end(), curve448PrivateKey.begin(), curve448PrivateKey.end());
-            mergedPrivateKey.insert(mergedPrivateKey.end(), kyberPrivateKey.begin(), kyberPrivateKey.end());
-            return SPHINXHash::SPHINX_256(mergedPrivateKey); // Hash the merged private key
-        };
-
-        // Function to merge the public keys of Curve448 and Kyber1024
-        auto mergePublicKeys = [](const SPHINXKey::SPHINXPubKey& curve448PublicKey, const SPHINXKey::SPHINXPubKey& kyberPublicKey) {
-            SPHINXKey::SPHINXPubKey mergedPublicKey;
-            mergedPublicKey.insert(mergedPublicKey.end(), curve448PublicKey.begin(), curve448PublicKey.end());
-            mergedPublicKey.insert(mergedPublicKey.end(), kyberPublicKey.begin(), kyberPublicKey.end());
-            return SPHINXHash::SPHINX_256(mergedPublicKey); // Hash the merged public key
-        };
-
-        // Generate Curve448 key pair from hybrid_key.cpp
+    // Function to generate the hybrid key pair
+    SPHINXHybridKey::HybridKeypair generateHybridKeypair() {
+        // Generate Curve448 key pair
         SPHINXKey::SPHINXPrivKey curve448PrivateKey = generateCurve448PrivateKey();
         SPHINXKey::SPHINXPubKey curve448PublicKey = generateCurve448PublicKey();
 
-        // Generate Kyber1024 key pair from hybrid_key.cpp
+        // Generate Kyber1024 key pair
         SPHINXKey::SPHINXPrivKey kyberPrivateKey = generateKyberPrivateKey();
         SPHINXKey::SPHINXPubKey kyberPublicKey = generateKyberPublicKey();
 
-        // Merge the private keys
-        SPHINXKey::SPHINXPrivKey sphinxPrivKey = mergePrivateKeys(curve448PrivateKey, kyberPrivateKey);
-
-        // Merge the public keys
-        SPHINXKey::SPHINXPubKey sphinxPubKey = mergePublicKeys(curve448PublicKey, kyberPublicKey);
-
         // Create the hybrid key pair structure
         SPHINXHybridKey::HybridKeypair hybridKeyPair;
-        hybridKeyPair.merged_key.sphinxPrivKey = sphinxPrivKey;
-        hybridKeyPair.merged_key.sphinxPubKey = sphinxPubKey;
+        hybridKeyPair.curve448_private_key = curve448PrivateKey;
+        hybridKeyPair.curve448_public_key = curve448PublicKey;
+        hybridKeyPair.kyber_private_key = kyberPrivateKey;
+        hybridKeyPair.kyber_public_key = kyberPublicKey;
 
         return hybridKeyPair;
     }
 
-    // Function to generate and perform key exchange hybrid method from "hybrid_key.cpp"
-    SPHINXHybridKey::HybridKeypair generate_and_perform_key_exchange() {
-        // Function to merge the private keys of Curve448 and Kyber1024
-        auto mergePrivateKeys = [](const SPHINXKey::SPHINXPrivKey& curve448PrivateKey, const SPHINXKey::SPHINXPrivKey& kyberPrivateKey) {
-            SPHINXKey::SPHINXPrivKey mergedPrivateKey;
-            mergedPrivateKey.insert(mergedPrivateKey.end(), curve448PrivateKey.begin(), curve448PrivateKey.end());
-            mergedPrivateKey.insert(mergedPrivateKey.end(), kyberPrivateKey.begin(), kyberPrivateKey.end());
-            return SPHINXHash::SPHINX_256(mergedPrivateKey); // Hash the merged private key
-        };
-
-        // Function to merge the public keys of Curve448 and Kyber1024
-        auto mergePublicKeys = [](const SPHINXKey::SPHINXPubKey& curve448PublicKey, const SPHINXKey::SPHINXPubKey& kyberPublicKey) {
-            SPHINXKey::SPHINXPubKey mergedPublicKey;
-            mergedPublicKey.insert(mergedPublicKey.end(), curve448PublicKey.begin(), curve448PublicKey.end());
-            mergedPublicKey.insert(mergedPublicKey.end(), kyberPublicKey.begin(), kyberPublicKey.end());
-            return SPHINXHash::SPHINX_256(mergedPublicKey); // Hash the merged public key
-        };
-
+    // Function to generate and perform key exchange using the hybrid method
+    SPHINXHybridKey::HybridKeypair generateAndPerformKeyExchange() {
         // Generate Curve448 key pair
         SPHINXKey::SPHINXPrivKey curve448PrivateKey = SPHINXHybridKey::generateCurve448PrivateKey();
         SPHINXKey::SPHINXPubKey curve448PublicKey = SPHINXHybridKey::generateCurve448PublicKey();
@@ -284,23 +220,32 @@ namespace SPHINXKey {
         SPHINXKey::SPHINXPrivKey kyberPrivateKey = SPHINXHybridKey::generateKyberPrivateKey();
         SPHINXKey::SPHINXPubKey kyberPublicKey = SPHINXHybridKey::generateKyberPublicKey();
 
-        // Merge the private keys
-        SPHINXKey::SPHINXPrivKey sphinxPrivKey = mergePrivateKeys(curve448PrivateKey, kyberPrivateKey);
-
-        // Merge the public keys
-        SPHINXKey::SPHINXPubKey sphinxPubKey = mergePublicKeys(curve448PublicKey, kyberPublicKey);
-
         // Create the hybrid key pair structure
         SPHINXHybridKey::HybridKeypair hybridKeyPair;
-        hybridKeyPair.merged_key.sphinxPrivKey = sphinxPrivKey;
-        hybridKeyPair.merged_key.sphinxPubKey = sphinxPubKey;
+        hybridKeyPair.curve448_private_key = curve448PrivateKey;
+        hybridKeyPair.curve448_public_key = curve448PublicKey;
+        hybridKeyPair.kyber_private_key = kyberPrivateKey;
+        hybridKeyPair.kyber_public_key = kyberPublicKey;
+
+        return hybridKeyPair;
+    }
+
+    // Function to generate and perform key exchange using the hybrid method
+    void generate_and_perform_key_exchange() {
+        // Generate Curve448 key pair
+        SPHINXKey::SPHINXPrivKey curve448PrivateKey = generateCurve448PrivateKey();
+        SPHINXKey::SPHINXPubKey curve448PublicKey = generateCurve448PublicKey();
+
+        // Generate Kyber1024 key pair
+        SPHINXKey::SPHINXPrivKey kyberPrivateKey = generateKyberPrivateKey();
+        SPHINXKey::SPHINXPubKey kyberPublicKey = generateKyberPublicKey();
 
         // Perform the key exchange using X448 and Kyber1024 KEM
         std::vector<uint8_t> encapsulated_key;
-        std::string shared_secret = SPHINXHybridKey::encapsulateHybridSharedSecret(hybridKeyPair, encapsulated_key);
+        std::string shared_secret = SPHINXHybridKey::encapsulateHybridSharedSecret(curve448PrivateKey, kyberPrivateKey, encapsulated_key);
 
         // Decapsulate the shared secret using Kyber1024 KEM
-        std::string decapsulated_shared_secret = SPHINXHybridKey::decapsulateHybridSharedSecret(hybridKeyPair, encapsulated_key);
+        std::string decapsulated_shared_secret = SPHINXHybridKey::decapsulateHybridSharedSecret(curve448PrivateKey, kyberPrivateKey, encapsulated_key);
 
         // Check if the decapsulated shared secret matches the original shared secret
         if (decapsulated_shared_secret == shared_secret) {
@@ -313,17 +258,16 @@ namespace SPHINXKey {
         std::string message = "Hello, this is a secret message.";
 
         // Encrypt the message using Kyber1024 PKE with the public key
-        std::string encrypted_message = SPHINXHybridKey::encryptMessage(message, hybridKeyPair.public_key_pke);
+        std::string encrypted_message = SPHINXHybridKey::encryptMessage(message, kyberPublicKey);
 
-        // Decrypt the message using Kyber1024 PKE with the secret key
-        std::string decrypted_message = SPHINXHybridKey::decryptMessage(encrypted_message, hybridKeyPair.secret_key_pke);
+        // Decrypt the message using Kyber1024 PKE with the private key
+        std::string decrypted_message = SPHINXHybridKey::decryptMessage(encrypted_message, kyberPrivateKey);
 
         // Print the original message, encrypted message, and decrypted message
         std::cout << "Original Message: " << message << std::endl;
         std::cout << "Encrypted Message: " << encrypted_message << std::endl;
         std::cout << "Decrypted Message: " << decrypted_message << std::endl;
 
-        // Return the shared secret as specified in the function signature
         return shared_secret;
     }
 
@@ -351,43 +295,28 @@ namespace SPHINXKey {
 
 // Usage
 int main() {
-    // Generate the hybrid key pair
+    // Generate hybrid key pair
     SPHINXHybridKey::HybridKeypair hybridKeyPair = SPHINXKey::generate_hybrid_keypair();
 
-    // Print the hybrid key pair
-    std::cout << "Hybrid Key Pair:" << std::endl;
-    std::cout << "Merged Private Key: ";
-    for (const auto& byte : hybridKeyPair.merged_key.sphinxPrivKey) {
-        std::cout << std::hex << static_cast<int>(byte);
-    }
-    std::cout << std::endl;
+    // Print the hybrid key pair details
+    std::pair<std::string, std::string> keyStrings = SPHINXKey::printKeyPair("Hybrid", hybridKeyPair.curve448_private_key, hybridKeyPair.kyber_public_key);
 
-    std::cout << "Merged Public Key: ";
-    for (const auto& byte : hybridKeyPair.merged_key.sphinxPubKey) {
-        std::cout << std::hex << static_cast<int>(byte);
-    }
-    std::cout << std::endl;
+    // Perform key exchange and encryption using the hybrid method
+    SPHINXKey::generate_and_perform_key_exchange();
 
-    // Generate and perform key exchange
-    SPHINXHybridKey::HybridKeypair exchangedKeys = SPHINXKey::generate_and_perform_key_exchange();
+    // Example message to be encrypted
+    std::string message = "Hello, this is a secret message.";
 
-    // Print the shared secret (Example: For demonstration purposes)
-    std::cout << "Shared Secret: ";
-    for (const auto& byte : exchangedKeys.shared_secret) {
-        std::cout << std::hex << static_cast<int>(byte);
-    }
-    std::cout << std::endl;
+    // Encrypt the message using Kyber1024 PKE with the hybrid key's public key
+    std::string encrypted_message = SPHINXKey::encryptMessage(message, hybridKeyPair.kyber_public_key);
 
-    // Call the printKeyPair function to print and get the keys and address as strings
-    std::pair<std::string, std::string> keys = SPHINXKey::printKeyPair("ExampleKeyPair", exchangedKeys.merged_key.sphinxPrivKey, exchangedKeys.merged_key.sphinxPubKey);
+    // Decrypt the message using Kyber1024 PKE with the hybrid key's private key
+    std::string decrypted_message = SPHINXKey::decryptMessage(encrypted_message, hybridKeyPair.kyber_private_key);
 
-    // Access the keys and contract address as strings
-    std::string private_key_str = keys.first;
-    std::string public_key_str = keys.second;
-
-    // Example usage: print the keys and contract address
-    std::cout << "Private Key as String: " << private_key_str << std::endl;
-    std::cout << "Public Key as String: " << public_key_str << std::endl;
+    // Print the encrypted and decrypted messages
+    std::cout << "Original Message: " << message << std::endl;
+    std::cout << "Encrypted Message: " << encrypted_message << std::endl;
+    std::cout << "Decrypted Message: " << decrypted_message << std::endl;
 
     return 0;
 }

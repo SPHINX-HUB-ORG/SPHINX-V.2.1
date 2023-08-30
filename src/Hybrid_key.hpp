@@ -14,9 +14,9 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include "Key.hpp"
 
 namespace SPHINXHybridKey {
-
     // Constants
     constexpr size_t CURVE448_PRIVATE_KEY_SIZE = 56;
     constexpr size_t CURVE448_PUBLIC_KEY_SIZE = 56;
@@ -71,13 +71,11 @@ namespace SPHINXHybridKey {
     // Function to perform the X448 key exchange
     void performX448KeyExchange(unsigned char shared_key[CURVE448_SHARED_SECRET_SIZE], const unsigned char private_key[CURVE448_PRIVATE_KEY_SIZE], const unsigned char public_key[CURVE448_PUBLIC_KEY_SIZE]);
 
-    // Structure to hold the merged keypair
-    struct HybridKeypair {
-        struct {
-            // Kyber1024 keypair
-            std::vector<unsigned char> kyber_public_key;
-            std::vector<unsigned char> kyber_private_key;
-        } merged_key;
+    // Structure hybrid keypair
+     struct HybridKeypair {
+        // Kyber1024 keypair
+        std::vector<unsigned char> kyber_public_key;
+        std::vector<unsigned char> kyber_private_key;
 
         // X448 keypair
         std::pair<std::vector<unsigned char>, std::vector<unsigned char>> x448_key;

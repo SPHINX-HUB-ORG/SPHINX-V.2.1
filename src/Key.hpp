@@ -13,6 +13,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cstdint>
+#include "Hybrid_key.hpp"
 
 namespace SPHINXHybridKey {
     // Assume the definition of SPHINXHybridKey
@@ -84,5 +85,5 @@ namespace SPHINXKey {
     std::pair<std::string, std::string> printKeyPair(const std::string& name, const SPHINXPrivKey& privateKey, const SPHINXPubKey& publicKey);
 } // namespace SPHINXKey
 
-#endif // HYBRID_KEY_HPP
+#endif // SPHINX_KEY_HPP
 
