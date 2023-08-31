@@ -3,176 +3,155 @@
 // This software is distributed under the MIT License.
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// The code provided defines a namespace SPHINXTrx that contains the implementation of a Transaction class related to the SPHINX protocol.
-// Let's go through the code:
-
-  // The line using json = nlohmann::json; introduces an alias json for the nlohmann::json class from the Nlohmann JSON library. 
-  // This allows to use json instead of the full class name.
-
-  // The Transaction class has a default constructor, Transaction::Transaction(), which is not implemented in the provided code. 
-  // This can assume that it contains the necessary logic to initialize a transaction object.
-
-  // The addInput function, Transaction::addInput(const std::string& input), is not implemented in the provided code. This function is 
-  // responsible for adding an input to the transaction.
-
-  // The addOutput function, Transaction::addOutput(const std::string& output), is not implemented in the provided code. This function is
-  // responsible for adding an output to the transaction.
-
-  // The serializeToJson function, Transaction::serializeToJson() const, serializes the transaction object into a JSON string 
-  // representation. It uses the Nlohmann JSON library to convert the transaction data to a JSON object, assigns the data to the data 
-  // JSON object, and then calls data.dump() to serialize the JSON object to a string. The serialized JSON string is returned.
-
-  // The deserializeFromJson function, Transaction::deserializeFromJson(const std::string& jsonData), deserializes the transaction 
-  // object from a JSON string representation. It uses the Nlohmann JSON library to parse the JSON string into a JSON object data using
-  // json::parse(jsonData). The function then extracts the transaction data from the data JSON object and updates the member variables
-  // of the transaction object accordingly.
-
-  // The signTransaction function, Transaction::signTransaction(const std::string& privateKey), performs the signing of the transaction.
-  // It first calls the serializeToBinary function (not provided in the code) to obtain the binary representation of the transaction. 
-  // Then, it uses the SPHINXUtils::hash function to calculate the hash of the serialized binary transaction. It calls other functions 
-  // from the SPHINXUtils namespace (such as SPHINXUtils::generateRandomNonce, SPHINXUtils::verifySignature, and 
-  // SPHINXUtils::checkFundsAvailability) to perform signing-related tasks, such as generating a random nonce, verifying the signature,
-  // and checking funds availability. Finally, it prints the signing information, including the private key used, the transaction hash,
-  // the nonce, and the validity of the signature and funds availability.
-
-// This provided code defines a Transaction class within the SPHINXTrx namespace. The class contains functions to add inputs and outputs
-// to the transaction, serialize and deserialize the transaction to/from JSON, and sign the transaction using various utility functions
-// from the SPHINXUtils namespace.
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 #include <iostream>
-#include <fstream>
 #include <string>
-#include <vector>
+
+#include <cassert>
+#include <stdexcept>
+
+#include <tinyformat.h>
+#include <util/strencodings.h>
+#include <version.h>
+
+#include <SphinxJS/jsonrpcpp/include/json.hpp>
+#include <Script.hpp>
+#include <Consensus/Asset.hpp>
+#include <Hash.hpp>
 #include "Transaction.hpp"
-#include "SphinxJS/jsonrpcpp/include/json.hpp"
-#include "Asset.hpp"
-#include "db.hpp"
-#include "Sign.hpp"
-#include "Mempool.hpp"
-#include "MerkleBlock.hpp"
-#include "Utxo.hpp"
 
 
-using namespace SPHINXUtxo;
+namespace SPHINXTx {
 
-// Forward declarations for functions that are defined later in "Merkleblock.hpp"
-std::string generateOrRetrieveSecretKeySeed();
-std::string generateOrRetrievePublicKeySeed();
-bool verifySignature(const std::string& data, const std::string& signature, const SPHINXMerkleBlock::SPHINXPubKey& publicKey);
-
-namespace SPHINXTrx {
-
-    void broadcastTransaction(const std::string& transactionData) {
-        // Implement the logic to broadcast the transaction to the mempool
-        std::cout << "Broadcasting transaction to the mempool: " << transactionData << std::endl;
+    // Convert COutPoint to a formatted string
+    std::string COutPoint::ToString() const {
+        return fmt::format("COutPoint({:.10}, {})", hash.ToString().substr(0, 10), n);
     }
 
-    std::string hash(const std::string& data);
-    unsigned int generateRandomNonce();
-    bool verifySignature(const std::string& data, const SPHINXPrivKey& privateKey);
-    bool checkFundsAvailability(const std::string& transactionData);
+    // Constructor for CTxIn
+    CTxIn::CTxIn(COutPoint prevoutIn, CScript scriptSigIn, uint32_t nSequenceIn)
+        : prevout(prevoutIn), scriptSig(scriptSigIn), nSequence(nSequenceIn) {}
 
-    class Transaction {
-    public:
-        std::string data;
-        std::string signature;
-        SPHINXMerkleBlock::SPHINXPubKey publicKey;
+    // Constructor for CTxIn with hashPrevTx
+    CTxIn::CTxIn(SPHINXHash::SPHINX_256 hashPrevTx, uint32_t nOut, CScript scriptSigIn, uint32_t nSequenceIn)
+        : prevout(COutPoint(hashPrevTx, nOut)), scriptSig(scriptSigIn), nSequence(nSequenceIn) {}
 
-        // Other member functions
+    // Convert CTxIn to a formatted string
+    std::string CTxIn::ToString() const {
+        std::string str;
+        str += fmt::format("CTxIn({}", prevout.ToString());
+        if (prevout.IsNull())
+            str += fmt::format(", coinbase {})", HexStr(scriptSig));
+        else
+            str += fmt::format(", scriptSig={})", HexStr(scriptSig).substr(0, 24));
+        if (nSequence != SEQUENCE_FINAL)
+            str += fmt::format(", nSequence={})", nSequence);
+        return str;
+    }
 
-        std::string toJson() const {
-            json transactionJson;
-            transactionJson["data"] = data;
-            transactionJson["signature"] = signature;
-            transactionJson["publicKey"] = SPHINXMerkleBlock::pubKeyToString(publicKey); // Convert publicKey to string
-            return transactionJson.dump();
+    // Constructor for CTxOut
+    CTxOut::CTxOut(const CAmount& nValueIn, CScript scriptPubKeyIn)
+        : nValue(nValueIn), scriptPubKey(scriptPubKeyIn) {}
+
+    // Convert CTxOut to a formatted string
+    std::string CTxOut::ToString() const {
+        return fmt::format("CTxOut(nValue={}.{:08}, scriptPubKey={:.30})", nValue / COIN, nValue % COIN, HexStr(scriptPubKey).substr(0, 30));
+    }
+
+    // Default constructor and constructor from CTransaction
+    CMutableTransaction::CMutableTransaction() : Version(CTransaction::CURRENT_VERSION), nLockTime(0) {}
+    CMutableTransaction::CMutableTransaction(const CTransaction& tx)
+        : vin(tx.vin), vout(tx.vout), Version(tx.Version), nLockTime(tx.nLockTime) {}
+
+    // Calculate hash of the transaction
+    SPHINXHash::SPHINX_256 CMutableTransaction::GetHash() const {
+        // Serialize the object to JSON
+        nlohmann::json jsonRepresentation = {
+            {"Version", Version},
+            {"vin", vin},
+            {"vout", vout},
+            {"nLockTime", nLockTime}
+            // ... Add other members if needed
+        };
+        
+        // Convert the JSON to a string and hash it
+        std::string jsonString = jsonRepresentation.dump();
+        return SPHINXHash::Hash(jsonString); // Assuming Hash is the function to calculate the hash
+    }
+
+    // Compute the hash of the transaction
+    SPHINXHash::SPHINX_256 CTransaction::ComputeHash() const {
+        // Serialize the object to JSON
+        nlohmann::json jsonRepresentation = {
+            {"Version", Version},
+            {"vin", vin},
+            {"vout", vout},
+            {"nLockTime", nLockTime}
+            // ... Add other members if needed
+        };
+        
+        // Convert the JSON to a string and hash it
+        std::string jsonString = jsonRepresentation.dump();
+        return SPHINXHash::Hash(jsonString); // Assuming Hash is the function to calculate the hash
+    }
+
+    // Compute the witness hash of the transaction
+    SPHINXHash::SPHINX_256 CTransaction::ComputeWitnessHash() const {
+        if (!HasWitness()) {
+            return hash;
         }
+        
+        // Serialize the object to JSON without witness data
+        nlohmann::json jsonRepresentation = {
+            {"Version", Version},
+            {"vin", vin},
+            {"vout", vout},
+            {"nLockTime", nLockTime}
+            // ... Add other members if needed
+        };
+        
+        // Convert the JSON to a string and hash it
+        std::string jsonString = jsonRepresentation.dump();
+        return SPHINXHash::Hash(jsonString); // Assuming Hash is the function to calculate the hash
+    }
 
-        void fromJson(const std::string& jsonStr) {
-            json transactionJson = json::parse(jsonStr);
-            data = transactionJson["data"].get<std::string>();
-            signature = transactionJson["signature"].get<std::string>();
-            publicKey = SPHINXMerkleBlock::stringToPubKey(transactionJson["publicKey"].get<std::string>()); // Convert string to publicKey
+    // Constructor for CTransaction from CMutableTransaction
+    CTransaction::CTransaction(const CMutableTransaction& tx)
+        : vin(tx.vin), vout(tx.vout), Version(tx.Version), nLockTime(tx.nLockTime), hash(ComputeHash()), m_witness_hash(ComputeWitnessHash()) {}
+
+    // Move constructor for CTransaction from CMutableTransaction
+    CTransaction::CTransaction(CMutableTransaction&& tx)
+        : vin(std::move(tx.vin)), vout(std::move(tx.vout)), Version(tx.Version), nLockTime(tx.nLockTime), hash(ComputeHash()), m_witness_hash(ComputeWitnessHash()) {}
+
+    // Calculate the total value out
+    CAmount CTransaction::GetValueOut() const {
+        CAmount nValueOut = 0;
+        for (const auto& tx_out : vout) {
+            if (!SPXRange(tx_out.nValue) || !SPXRange(nValueOut + tx_out.nValue))
+                throw std::runtime_error(std::string(__func__) + ": value out of range");
+            nValueOut += tx_out.nValue;
         }
+        assert(SPXRange(nValueOut));
+        return nValueOut;
+    }
 
-        void sign(const std::string& senderPrivateKey) {
-            // Create a private key object from the string
-            std::string transactionJson = toJson();
-            std::string transactionHash = hash(transactionJson);
+    // Calculate the total size of the transaction
+    unsigned int CTransaction::GetTotalSize() const {
+        return ::GetSerializeSize(*this, PROTOCOL_VERSION);
+    }
 
-            // Sign the transaction using the private key
-            signature = SPHINXMerkleBlock::SPHINXSign(transactionHash, senderPrivateKey);
-        }
+    // Convert CTransaction to a formatted string
+    std::string CTransaction::ToString() const {
+        std::string str;
+        str += fmt::format("CTransaction(hash={:.10}, ver={}, vin.size={}, vout.size={}, nLockTime={})\n",
+            GetHash().ToString().substr(0, 10), Version, vin.size(), vout.size(), nLockTime);
 
-        bool isConfirmed() const {
-            // Check if the transaction is confirmed
-            // Implement the confirmation logic
-            return true; // Replace with actual confirmation logic
-        }
+        for (const auto& tx_in : vin)
+            str += "    " + tx_in.ToString() + "\n";
 
-        std::string serializeToJson() const {
-            json data;
-            data["senderAddress"] = senderAddress;
-            data["recipientAddress"] = recipientAddress;
-            data["amount"] = amount;
-            data["timestamp"] = timestamp;
-            data["signature"] = signature;
-            data["senderPublicKey"] = senderPublicKey;
-            data["transactionData"] = transactionData; // Serialize transaction data
-            return data.dump();
-        }
+        for (const auto& tx_out : vout)
+            str += "    " + tx_out.ToString() + "\n";
 
-        void deserializeFromJson(const std::string& jsonData) {
-            json data = json::parse(jsonData);
-            senderAddress = data["senderAddress"].get<std::string>();
-            recipientAddress = data["recipientAddress"].get<std::string>();
-            amount = data["amount"].get<double>();
-            timestamp = data["timestamp"].get<std::time_t>();
-            signature = data["signature"].get<std::string>();
-            senderPublicKey = data["senderPublicKey"].get<std::string>();
-            transactionData = data["transactionData"].get<std::string>(); // Deserialize transaction data
-        }
+        return str;
+    }
 
-        // New function to request UTXO data from SPHINXUtxo
-        std::vector<UTXO> requestUTXOData(const std::string& address) {
-            // Call the function from SPHINXUtxo to get UTXOs for the given address
-            std::map<std::string, UTXO> utxoSet; // This will hold the UTXO data
-            // Assuming there's a function in SPHINXUtxo to retrieve UTXO data for a specific address
-            return findUTXOsForAddress(address, utxoSet);
-        }
-
-        std::string SPHINXTrx::Transaction::signTransaction(const std::string& privateKey) const {
-            std::string transactionHash = hash(serializeToJson());
-
-            // Call the checkFundsAvailability function from "utxo.cpp" to verify funds
-            bool areFundsAvailable = checkFundsAvailability(serializeToJson());
-
-            if (!areFundsAvailable) {
-                std::cout << "Funds not available for the transaction." << std::endl;
-                return ""; // Transaction signing failed due to insufficient funds
-            }
-
-            // Print the signing information
-            std::cout << "Transaction signed with private key: " << privateKey << std::endl;
-            std::cout << "Transaction Hash: " << transactionHash << std::endl;
-            std::cout << "Nonce: " << nonce << std::endl;
-            std::cout << "Signature Validity: " << (isSignatureValid ? "Valid" : "Invalid") << std::endl;
-            std::cout << "Funds Availability: " << (areFundsAvailable ? "Available" : "Not Available") << std::endl;
-
-            broadcastTransaction(transactionHash); // Broadcast the transaction to the mempool
-
-            return transactionHash;
-        }
-    };
-} // namespace SPHINXTrx
-
-
-
-
-
-
-
-
+} // namespace SPHINXTx
