@@ -7,7 +7,7 @@
 #include <string>
 #include <Hash.hpp> // Include the header for SPHINXHash
 #include <Consensus/Merkle.hpp>
-#include "Benchmark/Benchmark.hpp"
+#include "Benchmark.hpp"
 #include "Merkle_root.hpp"
 
 namespace SPHINXMerkle {
@@ -51,8 +51,7 @@ namespace SPHINXMerkle {
         }
     }
     BENCHMARK(BM_MerkleRoot);
+    BENCHMARK_MAIN();
 
 } // namespace SPHINXMerkle
-
-BENCHMARK_MAIN();
 

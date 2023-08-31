@@ -3,99 +3,80 @@
 // This software is distributed under the MIT License.
 
 
-#ifndef ASSET_HPP
-#define ASSET_HPP
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// The use of denominations like Giga, Mega, and Kilo for (SPX) serves a similar purpose as it does
+// in other contexts: it makes values easier to understand, manage, and communicate. Here are a few reasons why
+// such denominations are used:
+    
+    // 1). Clarity and Communication: Larger numbers can be challenging to interpret and compare at a
+    // glance. By using prefixes like Giga, Mega, and Kilo, make it easier for individuals to
+    // quickly understand the scale of the value being represented. It's much more intuitive to say
+    // "1 GSPX" instead of "1,000,000,000 Smix."
 
-#pragma once
+    // 2). Ease of Use: Using denominations that are multiples of 10^3 (like Giga, Mega, Kilo) makes
+    // calculations and conversions simpler. People are familiar with these prefixes from various
+    // contexts, and they are accustomed to making mental estimations based on them.
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <limits>
-#include <algorithm>
-#include <unordered_map>
+    // 3). Flexibility in Transactions: Different denominations allow users to choose the appropriate
+    // scale for their transactions. If someone wants to send a small amount, they can use smaller
+    // denominations like Smix or kSPX. If they are dealing with a larger value, they can use higher
+    // denominations.
 
-#include "Key.hpp"
-#include "Asset.hpp"
-#include "Miner.hpp"
-#include "PoW.hpp"
-#include "Transaction.hpp"
+    // 4). Consistency: Following a consistent naming convention with well-known prefixes from the 
+    // metric system (Giga, Mega, Kilo) provides a standardized way of referring to different value 
+    // scales. This makes it easier for users to understand the asset's value representation.
+    // Psychological Impact: Larger denominations can have a psychological impact, influencing perceptions
+    // of value and scarcity. This is similar to how prices ending in 99 cents can feel cheaper psychologically,
+    // even though the difference is minimal.
 
+// In the context of this asset, using Giga, Mega, and Kilo prefixes for denominations enhances usability,
+// communication, and comprehension of the value being represented, making it more user-friendly and accessible
+// to a wider audience.
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+#ifndef SPX_ASSET_HPP
+#define SPX_ASSET_HPP
+
+#include <cstdint>
 
 namespace SPHINXAsset {
 
-    class SPX {
-    public:
-        // Constructor to initialize SPX object with name and owner
-        SPX(const std::string& name, const std::string& owner)
-            : name(name), owner(owner) {}
+    /** Amount in Smix (Can be negative) */
+    typedef int64_t CAmount;
 
-        // Get the ID of the SPX asset
-        std::string getId() const;
+    /**
+        * 1 SPX (Symbolic Pixel) = 1,000,000,000,000,000,000 Smix (Smallest Symbolic Pixel)
+        * 1 Gsmix (Giga-Smix)    = 1,000,000,000 Smix
+        * 1 Msmix (Mega-Smix)    = 1,000,000 Smix
+        * 1 ksmix (Kilo-Smix)    = 1,000 Smix
+        * 1 Smix                 = The smallest unit
+    **/
 
-        // Get the name of the SPX asset
-        std::string getName() const;
+    /**
+        * The biggest unit is 1 SPX (Symbolic Pixel). It's the highest denomination and represents 1 quintillion
+        * (1,000,000,000,000,000,000) Smix (Smallest Symbolic Pixel).
+        * The smallest unit is 1 Smix. It is the base unit and is the smallest denomination in system. All other
+        * denominations are multiples of this base unit.
+        * The denominations between the biggest and smallest units are as follows:
+        * 1 GSPX (Giga-Smix) represents 1 billion Smix.
+        * 1 MSPX (Mega-Smix) represents 1 million Smix.
+        * 1 kSPX (Kilo-Smix) represents 1 thousand Smix.
+    **/
 
-        // Get the owner of the SPX asset
-        std::string getOwner() const;
+    // Denominations of SPX
+    static constexpr CAmount SPX  = 1000000000000000000;     // 1 SPX  = 1,000,000,000,000,000,000 Smix
+    static constexpr CAmount GSPX = 1000000000000;           // 1 GSPX = 1,000,000,000 Smix
+    static constexpr CAmount MSPX = 1000000000;              // 1 MSPX = 1,000,000 Smix
+    static constexpr CAmount kSPX = 1000000;                 // 1 kSPX = 1,000 Smix
+    static constexpr CAmount Smix = 1;                       // 1 Smix = 1 Smix
 
-        // Set the owner of the SPX asset to a new owner
-        void setOwner(const std::string& newOwner);
+    /** Maximum supply of SPX */
+    static constexpr CAmount MAX_SUPPLY = 50000000 * SPX;
 
-        // Simulate buying the SPX asset by changing ownership
-        void buy(const std::string& buyer);
-
-    private:
-        std::string id;      // ID of the SPX asset
-        std::string name;    // Name of the SPX asset
-        std::string owner;   // Owner of the SPX asset
-    };
-
-    class AssetManager {
-    public:
-        AssetManager();
-
-        void buySPX(const std::string& assetId, const std::string& buyer, const std::string& payer);
-
-        void issueSPX(const std::string& assetName, const std::string& owner, const std::string& payer);
-
-        void distributeRewards();
-
-        void mineBlock();
-
-        void setOwner(const std::string& assetId, const std::string& newOwner, const std::string& payer);
-
-        void transferSPX(const std::string& assetId, const std::string& newOwner, const std::string& payer);
-
-    private:
-        std::string generateUniqueId();
-
-        void payTransactionFee(const std::string& payer);
-
-        SPX* findAsset(const std::string& assetId);
-
-        void distributeDeveloperRewards();
-
-        void distributeMinerRewards();
-
-        void halveBlockReward();
-
-        std::string generateTransactionId();
-
-        std::string generateTransactionData();
-
-        int currentSupply; // Current total supply
-        int currentBlockHeight; // Current block height
-        bool developerMining; // Flag indicating developer mining phase
-
-        const int BLOCKS_PER_MONTH; // Number of blocks per month
-        const int INITIAL_DEVELOPER_MINING_REWARD; // Initial reward per block during developer mining phase
-        const int HALVING_START_BLOCK; // Block height to start halving rewards
-        const int HALVING_PERIOD; // Blocks per halving period
-
-        const std::vector<int> HALVING_SCHEDULE; // Halving reward schedule
-    };
+    /** Check if an amount of SPX is within valid range */
+    inline bool SPXRange(const CAmount& nValue) { return (nValue >= 0 && nValue <= MAX_SUPPLY); }
 
 } // namespace SPHINXAsset
 
-#endif // SPHINX_ASSET_HPP
+#endif // SPX_ASSET_HPP

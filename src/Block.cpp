@@ -2,38 +2,6 @@
 // All rights reserved.
 // This software is distributed under the MIT License.
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Private Member Variables: The private member variables seem well-defined and cover important block attributes like previous hash, merkle
-// root, signature, timestamp, nonce, difficulty, transactions, etc.
-
-    // Constructor: The constructor appears to be designed to initialize a block with the required attributes. The use of the member
-    // initialization list is good practice for initializing variables. However, ensure that the types of the input arguments 
-    // (timestamp and nonce) are correctly chosen based on their usage.
-
-    // Transaction Management: The ability to add transactions to the block and manage them using vectors is suitable for a blockchain system.
-
-    // Hash and Merkle Root Calculation: The methods for calculating the block hash and Merkle root seem correct, assuming that the necessary
-    // functions (SPHINXHash::SPHINX_256 and SPHINXMerkleBlock::constructMerkleTree) are correctly implemented.
-
-    // Signature and Verification: The functions related to signing the Merkle root and verifying the block's signature seem appropriate.
-    // Make sure that the underlying cryptographic library (SPHINXSign) is reliable.
-
-    // Serialization and Deserialization: The toJson and fromJson functions are correctly designed to serialize and deserialize the block data
-    // in JSON format. Again, this depends on the correctness of the nlohmann::json library and the correct implementation of these functions.
-    
-    // Printing Block Data: The toString and print functions are useful for displaying block data in a human-readable format.
-
-    // File I/O: The save and load functions for saving/loading blocks to/from files are reasonable and follow standard practices.
-
-    // Database Interaction: The saveToDatabase and loadFromDatabase functions for interacting with a distributed database are suitable for
-    // storing and retrieving block data. The implementation assumes the availability of the SPHINXDb::DistributedDb class and its methods.
-
-    // Getter Functions: The getter functions for retrieving stored Merkle root and signature seem well-defined.
-
-// The code represents a simplified implementation of a block management system with functionality related to block creation, verification, 
-// mining, Merkle tree construction, and database interaction.
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 #include <stdexcept>
 #include <fstream> 
@@ -251,7 +219,7 @@ namespace SPHINXBlock {
             return version_;
         }
 
-        // ! Block headers
+        // ! This is Block headers
         // Function to serialize BlockHeader to JSON format
         static nlohmann::json toJson(const BlockHeader& header) {
             nlohmann::json headerJson;

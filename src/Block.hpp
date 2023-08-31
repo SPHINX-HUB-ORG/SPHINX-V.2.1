@@ -19,27 +19,17 @@
 #include <array>
 
 #include "SphinxJS/jsonrpcpp/include/json.hpp"
-#include "Params.hpp"
-#include "MerkleBlock.hpp"
-#include "Chain.hpp"
+#include "Transaction.hpp"
+#include "Hash.hpp"
 
-
-// Forward declaration of other classes used in this header
-namespace SPHINXChain {
-    class Chain;  // Assuming you have a Chain class
-}
-
-namespace SPHINXDb {
-    class DistributedDb;  // Assuming you have a DistributedDb class
-}
 
 namespace SPHINXBlock {
     class Block {
     public:
         struct BlockHeader {
             uint32_t version;
-            std::string previousHash;
-            std::string merkleRoot;
+            std::string HashPrevBlock;
+            std::string HashMerkleRoot;
             std::string signature;
             uint32_t blockHeight;
             std::time_t timestamp;
@@ -48,9 +38,8 @@ namespace SPHINXBlock {
         };
 
     private:
-        int index;
-        std::string previousHash_;
-        std::string merkleRoot_;
+        std::string HashPrevBlock_;
+        std::string HashMerkleRoot_;
         std::string signature_;
         uint32_t blockHeight_;
         std::time_t timestamp_;
@@ -72,31 +61,18 @@ namespace SPHINXBlock {
 
         Block(const std::string& prevBlockHash, const std::string& timestamp, const std::string& nonce, const std::vector<Transaction>& transactions, const std::string& version, const std::string& previousHash = "", int index = 0);
 
-        uint32_t getVersion() const;
-        void addTransaction(const std::string& transaction);
-        std::string calculateBlockHash() const;
-        std::string calculateMerkleRoot() const;
-        void signMerkleRoot(const SPHINXPrivKey& privateKey, const std::string& merkleRoot);
-        bool verifySignature(const SPHINXPubKey& publicKey) const;
-        bool verifyMerkleRoot(const SPHINXPubKey& publicKey) const;
-        bool verifyBlock(const SPHINXPubKey& publicKey) const;
-
-        void setMerkleRoot(const std::string& merkleRoot);
-        void setSignature(const std::string& signature);
-        void setBlockHeight(uint32_t blockHeight);
-        void setNonce(uint32_t nonce);
-        void setDifficulty(uint32_t difficulty);
-        void setTransactions(const std::vector<std::string>& transactions);
-
-        std::string getPreviousHash() const;
-        std::string getMerkleRoot() const;
-        std::string getSignature() const;
-        uint32_t getBlockHeight() const;
-        std::time_t getTimestamp() const;
-        uint32_t getNonce() const;
-        uint32_t getDifficulty() const;
-        std::vector<std::string> getTransactions() const;
-        std::string getVersion() const;
+        BlockHeader getBlockHeader() const {
+            BlockHeader header;
+            header.version = version_;
+            header.HashPrevBlock = HashPrevBlock_;
+            header.HashMerkleRoot = HashMerkleRoot_;
+            header.signature = signature_;
+            header.blockHeight = blockHeight_;
+            header.timestamp = timestamp_;
+            header.nonce = nonce_;
+            header.difficulty = difficulty_;
+            return header;
+        }
 
         static nlohmann::json toJson(const BlockHeader& header);
         static BlockHeader fromJson(const nlohmann::json& headerJson);
@@ -111,5 +87,3 @@ namespace SPHINXBlock {
         std::string getStoredSignature() const;
     };
 } // namespace SPHINXBlock
-
-#endif // SPHINX_BLOCK_HPP
