@@ -3,101 +3,201 @@
 // This software is distributed under the MIT License.
 
 
-
 #ifndef SPHINX_TRX_HPP
 #define SPHINX_TRX_HPP
 
-#pragma once
-
 #include <ctime>
-#include <vector>
-#include <string>
 #include <iostream>
 #include <sstream>
 
-#include "Utils.hpp"
-#include "MerkleBlock.hpp"
+#include <cstdint>
+#include <vector>
+#include <limits>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <memory>
+#include <iostream>
 
-// Forward declarations for functions defined later in "MerkleBlock.hpp"
-std::string generateOrRetrieveSecretKeySeed();
-std::string generateOrRetrievePublicKeySeed();
-bool verifySignature(const std::string& data, const std::string& signature, const SPHINXMerkleBlock::SPHINXPubKey& publicKey);
+#include <prevector.h>
 
-namespace SPHINXTrx {
-    class Transaction {
+#include <Consensus/Asset.hpp>
+#include <script.hpp>
+#include <serialize.h>
+#include <Hash.hpp"
+
+
+namespace SPHINXTx {
+
+    // Constants
+    constexpr int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
+
+    // Forward Declarations
+    class COutPoint;
+    class CTxIn;
+    class CTxOut;
+    struct CMutableTransaction;
+    class CTransaction;
+
+    // Helper Functions
+    inline bool operator!=(const COutPoint& a, const COutPoint& b);
+
+    // Class Definitions
+    class COutPoint {
     public:
-        std::string data;
-        std::string signature;
-        SPHINXMerkleBlock::SPHINXPubKey publicKey;
+        SPHINXHash::SPHINX_256 hash; // Replaced uint256 with SPHINXHash::SPHINX_256
+        uint32_t n;
 
-        // Other member functions
+        static constexpr uint32_t NULL_INDEX = std::numeric_limits<uint32_t>::max();
 
-        std::string toJson() const {
-            json transactionJson;
-            transactionJson["data"] = data;
-            transactionJson["signature"] = signature;
-            transactionJson["publicKey"] = SPHINXMerkleBlock::pubKeyToString(publicKey); // Convert publicKey to string
-            return transactionJson.dump();
+        COutPoint() : n(NULL_INDEX) {}
+        COutPoint(const SPHINXHash::SPHINX_256& hashIn, uint32_t nIn) : hash(hashIn), n(nIn) {}
+
+        // Methods
+        void SetNull() { hash.SetNull(); n = NULL_INDEX; }
+        bool IsNull() const { return (hash.IsNull() && n == NULL_INDEX); }
+
+        // Operators
+        friend bool operator<(const COutPoint& a, const COutPoint& b);
+        friend bool operator==(const COutPoint& a, const COutPoint& b);
+        friend bool operator!=(const COutPoint& a, const COutPoint& b);
+
+        std::string ToString() const;
+    };
+
+    class CTxIn {
+    public:
+        COutPoint prevout;
+        CScript scriptSig;
+        uint32_t nSequence;
+        CScriptWitness scriptWitness;
+
+        // Constants
+        static const uint32_t SEQUENCE_FINAL = 0xffffffff;
+        static const uint32_t MAX_SEQUENCE_NONFINAL;
+
+        // Flags
+        static const uint32_t SEQUENCE_LOCKTIME_DISABLE_FLAG;
+        static const uint32_t SEQUENCE_LOCKTIME_TYPE_FLAG;
+        static const uint32_t SEQUENCE_LOCKTIME_MASK;
+        static const int SEQUENCE_LOCKTIME_GRANULARITY;
+
+        // Constructors
+        CTxIn();
+        explicit CTxIn(COutPoint prevoutIn, CScript scriptSigIn = CScript(), uint32_t nSequenceIn = SEQUENCE_FINAL);
+        CTxIn(SPHINXHash::SPHINX_256 hashPrevTx, uint32_t nOut, CScript scriptSigIn = CScript(), uint32_t nSequenceIn = SEQUENCE_FINAL);
+
+        // Operators
+        friend bool operator==(const CTxIn& a, const CTxIn& b);
+        friend bool operator!=(const CTxIn& a, const CTxIn& b);
+
+        std::string ToString() const;
+    };
+
+    class CTxOut {
+    public:
+        CAmount nValue;
+        CScript scriptPubKey;
+
+        CTxOut();
+        CTxOut(const CAmount& nValueIn, CScript scriptPubKeyIn);
+
+        // Operators
+        friend bool operator==(const CTxOut& a, const CTxOut& b);
+        friend bool operator!=(const CTxOut& a, const CTxOut& b);
+
+        std::string ToString() const;
+    };
+
+    struct CMutableTransaction {
+        std::vector<CTxIn> vin;
+        std::vector<CTxOut> vout;
+        int32_t nVersion;
+        uint32_t nLockTime;
+
+        explicit CMutableTransaction();
+        explicit CMutableTransaction(const CTransaction& tx);
+
+        // Serialize CMutableTransaction to JSON
+        template <typename Stream>
+        void Serialize(Stream& s) const {
+            nlohmann::json jsonOutput;
+            to_json(jsonOutput, *this);
+            s << jsonOutput.dump();
         }
 
-        void fromJson(const std::string& jsonStr) {
-            json transactionJson = json::parse(jsonStr);
-            data = transactionJson["data"].get<std::string>();
-            signature = transactionJson["signature"].get<std::string>();
-            publicKey = SPHINXMerkleBlock::stringToPubKey(transactionJson["publicKey"].get<std::string>()); // Convert string to publicKey
+        // Deserialize CMutableTransaction from JSON
+        template <typename Stream>
+        void Unserialize(Stream& s) {
+            nlohmann::json jsonInput;
+            s >> jsonInput;
+            from_json(jsonInput, *this);
         }
 
-        void sign(const std::string& senderPrivateKey) {
-            // Create a private key object from the string
-            std::string transactionJson = toJson();
-            std::string transactionHash = hash(transactionJson);
-
-            // Sign the transaction using the private key
-            signature = SPHINXMerkleBlock::SPHINXSign(transactionHash, senderPrivateKey);
+        // Deserialize constructor for CMutableTransaction from JSON
+        template <typename Stream>
+        CMutableTransaction(deserialize_type, Stream& s) {
+            Unserialize(s);
         }
 
-        bool isConfirmed() const {
-            // Check if the transaction is confirmed
-            // Implement the confirmation logic
-            return true; // Replace with actual confirmation logic
+        SPHINXHash::SPHINX_256 GetHash() const;
+
+        bool HasWitness() const;
+    };
+
+    class CTransaction {
+    public:
+        static const int32_t CURRENT_VERSION = 2;
+
+        const std::vector<CTxIn> vin;
+        const std::vector<CTxOut> vout;
+        const int32_t nVersion;
+        const uint32_t nLockTime;
+
+        // Constructors
+        explicit CTransaction(const CMutableTransaction& tx);
+        explicit CTransaction(CMutableTransaction&& tx);
+
+        // Serialization using nlohmann::json
+        template <typename Stream>
+        void Serialize(Stream& s) const {
+            nlohmann::json jsonOutput;
+            
+            // Populate jsonOutput with relevant data from *this
+            
+            s << jsonOutput.dump();
         }
 
-        std::string serializeToJson() const {
-            json dataJson;
-            dataJson["data"] = data;
-            dataJson["signature"] = signature;
-            dataJson["publicKey"] = SPHINXMerkleBlock::pubKeyToString(publicKey);
-            return dataJson.dump();
+        // Deserialization using nlohmann::json
+        template <typename Stream>
+        CTransaction(deserialize_type, Stream& s) {
+            nlohmann::json jsonInput;
+            s >> jsonInput;
+
+            // Extract data from jsonInput and construct a CMutableTransaction object
+            CMutableTransaction mutableTx(deserialize, jsonInput);
+
+            // Construct a CTransaction using the CMutableTransaction
+            *this = CTransaction(mutableTx);
         }
 
-        void deserializeFromJson(const std::string& jsonData) {
-            json dataJson = json::parse(jsonData);
-            data = dataJson["data"].get<std::string>();
-            signature = dataJson["signature"].get<std::string>();
-            publicKey = SPHINXMerkleBlock::stringToPubKey(dataJson["publicKey"].get<std::string>());
-        }
+        // Methods
+        bool IsNull() const;
+        const SPHINXHash::SPHINX_256& GetHash() const;
+        const SPHINXHash::SPHINX_256& GetWitnessHash() const;
+        CAmount GetValueOut() const;
+        unsigned int GetTotalSize() const;
+        bool IsCoinBase() const;
+        bool HasWitness() const;
 
-        std::string signTransaction(const std::string& privateKey) const {
-            std::string transactionHash = hash(serializeToJson());
+        // Operators
+        friend bool operator==(const CTransaction& a, const CTransaction& b);
+        friend bool operator!=(const CTransaction& a, const CTransaction& b);
 
-            // Call other functions to perform signing-related tasks
-            unsigned int nonce = generateRandomNonce();
-            bool isSignatureValid = verifySignature(transactionHash, privateKey);
-            bool areFundsAvailable = checkFundsAvailability(serializeToJson());
+        std::string ToString() const;
+    };
 
-            // Print the signing information
-            std::cout << "Transaction signed with private key: " << privateKey << std::endl;
-            std::cout << "Transaction Hash: " << transactionHash << std::endl;
-            std::cout << "Nonce: " << nonce << std::endl;
-            std::cout << "Signature Validity: " << (isSignatureValid ? "Valid" : "Invalid") << std::endl;
-            std::cout << "Funds Availability: " << (areFundsAvailable ? "Available" : "Not Available") << std::endl;
-
-            broadcastTransaction(transactionHash); // Broadcast the transaction to the mempool
-
-            return transactionHash;
-        }
-    }
-};
+}; // namespace SPHINXTx
 
 #endif // TRANSACTION_HPP
 
