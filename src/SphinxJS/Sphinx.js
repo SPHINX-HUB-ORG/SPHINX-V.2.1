@@ -3,7 +3,6 @@
 // This software is distributed under the MIT License.
 
 
-
 // Include necessary libraries
 const jsonrpc = require('.jsonrpcpp/include/jsonrpcpp');
 const SPHINXContractInterface = require('../Consensus/interface');
