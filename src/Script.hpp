@@ -25,7 +25,8 @@ enum class Opcode {
     OP_VALIDATE_TRANSACTION,
     OP_FIND_UTXOS_FOR_ADDRESS,
     OP_GET_UTXO,
-    OP_GET_TOTAL_UTXO_AMOUNT
+    OP_GET_TOTAL_UTXO_AMOUNT,
+    OP_SPHINX_256 // Add the new opcode for hash operation
 };
 
 class ScriptInterpreter {
@@ -50,6 +51,6 @@ private:
     void opFindUTXOsForAddress();
     void opGetUTXO();
     void opGetTotalUTXOAmount();
+    void opSPHINX_256(); // Declare the new opcode method
 };
 
-#endif

@@ -12,7 +12,7 @@
 #include "Script.hpp"
 #include "Sign.hpp"
 #include "Utxo.hpp"
-
+#include "Hash.hpp"
 
 enum class Opcode {
     OP_CURVE448_KEYPAIR,
@@ -49,6 +49,7 @@ private:
     void opFindUTXOsForAddress();
     void opGetUTXO();
     void opGetTotalUTXOAmount();
+    void opSPHINX_256();
 };
 
 bool ScriptInterpreter::executeScript(const std::vector<Opcode>& script) {
@@ -87,6 +88,9 @@ bool ScriptInterpreter::executeScript(const std::vector<Opcode>& script) {
             case Opcode::OP_GET_TOTAL_UTXO_AMOUNT:
                 opGetTotalUTXOAmount();
                 break;
+            case Opcode::OP_SPHINX_256: // Handle the new opcode for hashing
+                opSPHINX_256();
+                break;
             // Add case statements for other opcodes
         }
     }
@@ -118,4 +122,15 @@ void ScriptInterpreter::opVerifyTransaction() {
     bool isSignatureValid = SPHINXSign::verify_data(signedTransaction.data(), signature, publicKey);
 
     stack.push(isSignatureValid);
+}
+
+void ScriptInterpreter::opSPHINX_256() {
+    std::string data = /* Get the data from the stack */;
+
+    // Calculate the hash using SPHINX_256 hash function
+    std::string hashResult = SPHINXHash::calculateHash(data, SPHINXHash::SPHINX_256);
+
+    // Push the hash result onto the stack or perform desired actions
+    // For example, you can push the hash onto the stack like this:
+    stack.push(hashResult);
 }
