@@ -12,12 +12,12 @@
 #include <array>
 #include <map>
 
-#include "Block.hpp"
-#include "Hash.hpp"
-#include "SphinxJS/jsonrpcpp/include/json.hpp"
-#include "Merkleblock.hpp"
 #include "Transaction.hpp"
-#include "Chain.hpp"
+#include "Block.hpp"
+#include <Hash.hpp>
+#include <SphinxJS/jsonrpcpp/include/json.hpp>
+#include <Merkleblock.hpp>
+#include <Chain.hpp>
 #include "Db.hpp"
 #include "Params.hpp"
 #include "BlockManager.hpp"
@@ -27,8 +27,8 @@ namespace SPHINXBlock {
     class Block {    
     struct BlockHeader {
         uint32_t version;
-        std::string previousHash;
-        std::string merkleRoot;
+        std::string HashPrevBlock;
+        std::string HashMerkleRoot;
         std::string signature;
         uint32_t blockHeight;
         std::time_t timestamp;
@@ -39,8 +39,8 @@ namespace SPHINXBlock {
     private:
         // Private member variables
         int index;
-        std::string previousHash_;               // The hash of the previous block in the blockchain
-        std::string merkleRoot_;                 // The Merkle root hash of the transactions in the block
+        std::string HashPrevBlock_;              // The hash of the previous block in the blockchain
+        std::string HashMerkleRoot_;             // The Merkle root hash of the transactions in the block
         std::string signature_;                  // The signature of the block
         uint32_t blockHeight_;                   // The position of the block within the blockchain
         std::time_t timestamp_;                  // The time when the block was created
