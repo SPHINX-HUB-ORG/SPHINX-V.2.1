@@ -58,7 +58,7 @@
 
 namespace SPHINXContract {
 
-    struct SPHINX_PublicKey {
+    struct SPHINXPubKey {
         std::string publicKeyData;
         std::string name; // Additional identity-related data
         // Add more identity-related fields as needed
@@ -180,11 +180,11 @@ namespace SPHINXContract {
             tokens[SPX_CT1_SYMBOL] = spxToken;
         }
 
-        void transferToken(const std::string& symbol, const std::string& from, const std::string& to, int amount);
-        void mintToken(const std::string& symbol, const std::string& to, int amount);
-        void burnToken(const std::string& symbol, const std::string& from, int amount);
-        void deposit(const std::string& symbol, const std::string& account, int amount);
-        void withdraw(const std::string& symbol, const std::string& account, int amount);
+        void transferToken(const std::string& symbol, const std::string& from, const std::string& to, int CAmount);
+        void mintToken(const std::string& symbol, const std::string& to, int CAmount);
+        void burnToken(const std::string& symbol, const std::string& from, int CAmount);
+        void deposit(const std::string& symbol, const std::string& account, int CAmount);
+        void withdraw(const std::string& symbol, const std::string& account, int CAmount);
         void executeTransaction(const Transaction& transaction);
         void executeConfidentialTransaction(const ConfidentialTransaction& transaction);
         void addEventHandler(const EventHandler& handler);
