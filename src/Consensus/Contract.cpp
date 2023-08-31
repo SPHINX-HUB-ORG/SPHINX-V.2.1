@@ -57,18 +57,17 @@
 #include <unordered_map>
 #include <cstdlib>
 
-#include "../Transaction.hpp"
-#include "../Asset.hpp"
-#include "../Wallet.hpp"
-#include "../json.hpp"
-#include "../db.hpp"
-#include "../Chain.hpp"
-#include "../Chainstate.hpp"
+#include <Primitives/Transaction.hpp>
+#include <Wallet/Wallet.hpp>
+#include <SphinxJS/jsonrpcpp/include/json.hpp>
+#include <db.hpp>
+#include <Chain.hpp>
+#include <Chainstate.hpp>
 
+#include "Asset.hpp"
 #include "Contract.hpp"
-#include "Interface.hpp"
+#include "Consensus.hpp"
 
-using json = nlohmann::json;
 
 namespace SPHINXContract {
 
@@ -78,7 +77,15 @@ namespace SPHINXContract {
     class SPHINXTrx {
     public:
         // Static function for processing a transaction
-        static void processTransaction(const Transaction& transaction); // Function declaration
+        static void processTransaction(const Transaction& transaction) {
+            // Validate the transaction using consensus rules
+            if (SPHINXConsensus::ValidateTransaction(transaction)) {
+                // Process the transaction
+                // ...
+            } else {
+                std::cout << "Transaction validation failed" << std::endl;
+            }
+        }
     };
 
     // Interface for token contract
@@ -88,7 +95,7 @@ namespace SPHINXContract {
         virtual int getBalance(const std::string& user) const = 0;
         
         // Function to transfer tokens from one address to another
-        virtual void transfer(const std::string& from, const std::string& to, int amount) = 0;
+        virtual void transfer(const std::string& from, const std::string& to, int CAmount) = 0;
         
         // Virtual destructor
         virtual ~TokenContractInterface() {}
@@ -109,12 +116,12 @@ namespace SPHINXContract {
             }
         }
 
-        void transfer(const std::string& from, const std::string& to, int amount) override {
+        void transfer(const std::string& from, const std::string& to, int CAmount) override {
             // Transfer tokens from one address to another
-            if (balances.find(from) != balances.end() && balances[from] >= amount) {
-                balances[from] -= amount;
-                balances[to] += amount;
-                std::cout << "Transferred " << amount << " SPX from " << from << " to " << to << std::endl;
+            if (balances.find(from) != balances.end() && balances[from] >= CAmount) {
+                balances[from] -= CAmount;
+                balances[to] += CAmount;
+                std::cout << "Transferred " << CAmount << " SPX from " << from << " to " << to << std::endl;
             } else {
                 std::cout << "Insufficient balance or invalid address" << std::endl;
             }
@@ -155,9 +162,9 @@ namespace SPHINXContract {
         // AtomicSwap class for executing atomic swaps
         class AtomicSwap {
         public:
-            void executeSwap(const std::string& senderAddress, const std::string& receiverAddress, double amount) {
+            void executeSwap(const std::string& senderAddress, const std::string& receiverAddress, double CAmount) {
                 // Execute atomic swap between sender and receiver
-                std::cout << "Executing atomic swap: Sender = " << senderAddress << ", Receiver = " << receiverAddress << ", Amount = " << amount << std::endl;
+                std::cout << "Executing atomic swap: Sender = " << senderAddress << ", Receiver = " << receiverAddress << ", CAmount = " << CAmount << std::endl;
                 std::cout << "Atomic swap executed successfully!" << std::endl;
             }
         };
@@ -257,7 +264,13 @@ namespace SPHINXContract {
         }
 
         void executeTransaction(const Transaction& transaction) {
-            std::cout << "Executing transaction: " << transaction.toString() << std::endl;
+            // Validate the transaction using consensus rules
+            if (SPHINXConsensus::ValidateTransaction(transaction)) {
+                std::cout << "Executing transaction: " << transaction.toString() << std::endl;
+                // Perform transaction processing logic here
+            } else {
+                std::cout << "Transaction validation failed" << std::endl;
+            }
         }
 
         std::string generateSmartContractAddress(const std::string& contractCode, const std::string& SPHINXWallet) {
@@ -276,11 +289,11 @@ namespace SPHINXContract {
             std::string type; // Type of transaction
             std::string from; // Sender address
             std::string to; // Receiver address
-            int amount; // Transaction amount
+            int CAmount; // Transaction amount
 
         public:
-            Transaction(const std::string& _type, const std::string& _from, const std::string& _to, int _amount)
-                : type(_type), from(_from), to(_to), amount(_amount) {}
+            Transaction(const std::string& _type, const std::string& _from, const std::string& _to, int _CAmount)
+                : type(_type), from(_from), to(_to), CAmount(_CAmount) {}
 
             std::string getType() const {
                 return type;
@@ -294,12 +307,12 @@ namespace SPHINXContract {
                 return to;
             }
 
-            int getAmount() const {
-                return amount;
+            int getCAmount() const {
+                return CAmount;
             }
 
             std::string toString() const {
-                std::string transactionString = "Type: " + type + ", From: " + from + ", To: " + to + ", Amount: " + std::to_string(amount);
+                std::string transactionString = "Type: " + type + ", From: " + from + ", To: " + to + ", CAmount: " + std::to_string(CAmount);
                 return transactionString;
             }
         };
@@ -399,8 +412,8 @@ extern "C" {
     }
 
     // Example function to transfer tokens
-    void transfer(SPHINXContract::Token* token, const char* from, const char* to, int amount) {
-        token->transfer(from, to, amount);
+    void transfer(SPHINXContract::Token* token, const char* from, const char* to, int CAmount) {
+        token->transfer(from, to, CAmount);
     }
 
     // Example function to set an event handler
