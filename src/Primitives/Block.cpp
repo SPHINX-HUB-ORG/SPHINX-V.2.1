@@ -14,26 +14,26 @@
 namespace SPHINXBlock {
 
     struct BlockHeader {
-        uint32_t version;
+        uint32_t nVersion;
         std::string hashPrevBlock;
         std::string hashMerkleRoot;
         std::string signature;
         uint32_t blockHeight;
-        std::time_t timestamp;
-        uint32_t nonce;
-        uint32_t difficulty;
+        std::time_t nTimestamp;
+        uint32_t nNonce;
+        uint32_t nDifficulty;
 
         SPHINXHash::SPHINX_256 GetHash() const {
             // Create a JSON representation of the object
             nlohmann::json jsonRepresentation = {
-                {"version", version},
+                {"version", nVersion},
                 {"hashPrevBlock", hashPrevBlock},
                 {"hashMerkleRoot", hashMerkleRoot},
                 {"signature", signature},
                 {"blockHeight", blockHeight},
-                {"timestamp", timestamp},
-                {"nonce", nonce},
-                {"difficulty", difficulty}
+                {"timestamp", nTimestamp},
+                {"nonce", nNonce},
+                {"difficulty", nDifficulty}
             };
 
             // Convert the JSON to a string

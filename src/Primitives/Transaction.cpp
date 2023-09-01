@@ -58,15 +58,15 @@ namespace SPHINXTx {
     }
 
     // Default constructor and constructor from CTransaction
-    CMutableTransaction::CMutableTransaction() : Version(CTransaction::CURRENT_VERSION), nLockTime(0) {}
+    CMutableTransaction::CMutableTransaction() : nVersion(CTransaction::CURRENT_VERSION), nLockTime(0) {}
     CMutableTransaction::CMutableTransaction(const CTransaction& tx)
-        : vin(tx.vin), vout(tx.vout), Version(tx.Version), nLockTime(tx.nLockTime) {}
+        : vin(tx.vin), vout(tx.vout), nVersion(tx.nVersion), nLockTime(tx.nLockTime) {}
 
     // Calculate hash of the transaction
     SPHINXHash::SPHINX_256 CMutableTransaction::GetHash() const {
         // Serialize the object to JSON
         nlohmann::json jsonRepresentation = {
-            {"Version", Version},
+            {"Version", nVersion},
             {"vin", vin},
             {"vout", vout},
             {"nLockTime", nLockTime}
@@ -82,7 +82,7 @@ namespace SPHINXTx {
     SPHINXHash::SPHINX_256 CTransaction::ComputeHash() const {
         // Serialize the object to JSON
         nlohmann::json jsonRepresentation = {
-            {"Version", Version},
+            {"Version", nVersion},
             {"vin", vin},
             {"vout", vout},
             {"nLockTime", nLockTime}
@@ -102,7 +102,7 @@ namespace SPHINXTx {
         
         // Serialize the object to JSON without witness data
         nlohmann::json jsonRepresentation = {
-            {"Version", Version},
+            {"Version", nVersion},
             {"vin", vin},
             {"vout", vout},
             {"nLockTime", nLockTime}
@@ -116,11 +116,11 @@ namespace SPHINXTx {
 
     // Constructor for CTransaction from CMutableTransaction
     CTransaction::CTransaction(const CMutableTransaction& tx)
-        : vin(tx.vin), vout(tx.vout), Version(tx.Version), nLockTime(tx.nLockTime), hash(ComputeHash()), m_witness_hash(ComputeWitnessHash()) {}
+        : vin(tx.vin), vout(tx.vout), nVersion(tx.nVersion), nLockTime(tx.nLockTime), hash(ComputeHash()), m_witness_hash(ComputeWitnessHash()) {}
 
     // Move constructor for CTransaction from CMutableTransaction
     CTransaction::CTransaction(CMutableTransaction&& tx)
-        : vin(std::move(tx.vin)), vout(std::move(tx.vout)), Version(tx.Version), nLockTime(tx.nLockTime), hash(ComputeHash()), m_witness_hash(ComputeWitnessHash()) {}
+        : vin(std::move(tx.vin)), vout(std::move(tx.vout)), nVersion(tx.nVersion), nLockTime(tx.nLockTime), hash(ComputeHash()), m_witness_hash(ComputeWitnessHash()) {}
 
     // Calculate the total value out
     CAmount CTransaction::GetValueOut() const {
@@ -143,7 +143,7 @@ namespace SPHINXTx {
     std::string CTransaction::ToString() const {
         std::string str;
         str += fmt::format("CTransaction(hash={:.10}, ver={}, vin.size={}, vout.size={}, nLockTime={})\n",
-            GetHash().ToString().substr(0, 10), Version, vin.size(), vout.size(), nLockTime);
+            GetHash().ToString().substr(0, 10), nVersion, vin.size(), vout.size(), nLockTime);
 
         for (const auto& tx_in : vin)
             str += "    " + tx_in.ToString() + "\n";

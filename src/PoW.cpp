@@ -53,7 +53,7 @@
 #include <cstdint>
 #include <iomanip>
 #include "Hash.hpp"
-#include "Block.hpp"
+#include <Primitives/Block.hpp>
 #include "Miner.hpp"
 #include "PoW.hpp"
 #include "Fees.hpp"
