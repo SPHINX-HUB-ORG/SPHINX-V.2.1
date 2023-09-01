@@ -255,7 +255,7 @@ namespace BlockchainGenesis {
         }
     };
 
-    // Define ethdb.Database (simplified for illustration)
+    // Define sphinxdb.Database (simplified for illustration)
     class Database {
     public:
         // Add required functions
